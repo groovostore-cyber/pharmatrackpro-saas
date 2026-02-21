@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activate Free Trial - PHARMA PRO</title>
+    <link rel="stylesheet" href="../../assets/css/styles.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .trial-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            width: 100%;
+            max-width: 500px;
+            padding: 40px 30px;
+        }
+
+        .trial-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .trial-header h1 {
+            font-size: 24px;
+            color: #333;
+            margin: 0 0 10px 0;
+        }
+
+        .trial-header p {
+            color: #666;
+            font-size: 14px;
+            margin: 0;
+        }
+
+        .trial-benefits {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 25px;
+        }
+
+        .trial-benefits h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 14px;
+        }
+
+        .trial-benefits ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .trial-benefits li {
+            color: #666;
+            font-size: 13px;
+            padding: 5px 0;
+            display: flex;
+            align-items: center;
+        }
+
+        .trial-benefits li:before {
+            content: "✓";
+            color: #667eea;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            color: #333;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        input[type="email"],
+        input[type="tel"],
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        input[type="email"]:focus,
+        input[type="tel"]:focus,
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .error-message {
+            color: #d32f2f;
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .success-message {
+            color: #388e3c;
+            font-size: 13px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .trial-timer {
+            text-align: center;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            color: #856404;
+            font-size: 13px;
+        }
+
+        .trial-timer strong {
+            color: #333;
+            font-size: 16px;
+            display: block;
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="trial-container">
+        <div class="trial-header">
+            <h1>🎉 Activate Your Free Trial</h1>
+            <p>Get 30 days of full access to PHARMA PRO</p>
+        </div>
+
+        <div class="trial-timer">
+            <strong>30 Days Free</strong>
+            Full access to all features. No credit card required.
+        </div>
+
+        <div class="trial-benefits">
+            <h3>What You Get:</h3>
+            <ul>
+                <li>Complete inventory management</li>
+                <li>Sales & invoice tracking</li>
+                <li>Customer database</li>
+                <li>Analytics & reporting</li>
+                <li>Full API access</li>
+            </ul>
+        </div>
+
+        <form id="activateTrialForm">
+            <div class="form-group">
+                <label for="email">Email Address *</label>
+                <input type="email" id="email" name="email" required placeholder="you@example.com">
+                <div class="error-message" id="emailError"></div>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone Number *</label>
+                <input type="tel" id="phone" name="phone" required placeholder="+91 98765 43210">
+                <div class="error-message" id="phoneError"></div>
+            </div>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Activating your trial...</p>
+            </div>
+
+            <div class="error-message" id="formError"></div>
+            <div class="success-message" id="formSuccess"></div>
+
+            <div class="button-group">
+                <button type="button" class="btn btn-secondary" onclick="goBack()">Cancel</button>
+                <button type="submit" class="btn btn-primary" id="submitBtn">Activate Trial</button>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('activateTrialForm');
+        const emailInput = document.getElementById('email');
+        const phoneInput = document.getElementById('phone');
+        const loadingDiv = document.getElementById('loading');
+        const formError = document.getElementById('formError');
+        const formSuccess = document.getElementById('formSuccess');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Validate email format
+        function validateEmail(email) {
+            const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return regex.test(email);
+        }
+
+        // Validate phone format (basic: at least 10 digits)
+        function validatePhone(phone) {
+            const digits = phone.replace(/\D/g, '');
+            return digits.length >= 10;
+        }
+
+        // Clear error messages
+        function clearErrors() {
+            document.getElementById('emailError').style.display = 'none';
+            document.getElementById('phoneError').style.display = 'none';
+            formError.style.display = 'none';
+            formSuccess.style.display = 'none';
+        }
+
+        // Show field error
+        function showFieldError(fieldId, message) {
+            document.getElementById(fieldId + 'Error').textContent = message;
+            document.getElementById(fieldId + 'Error').style.display = 'block';
+        }
+
+        // Validate form
+        function validateForm() {
+            clearErrors();
+            let isValid = true;
+
+            const email = emailInput.value.trim();
+            if (!email) {
+                showFieldError('email', 'Email is required');
+                isValid = false;
+            } else if (!validateEmail(email)) {
+                showFieldError('email', 'Please enter a valid email address');
+                isValid = false;
+            }
+
+            const phone = phoneInput.value.trim();
+            if (!phone) {
+                showFieldError('phone', 'Phone number is required');
+                isValid = false;
+            } else if (!validatePhone(phone)) {
+                showFieldError('phone', 'Please enter a valid phone number (at least 10 digits)');
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // Handle form submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!validateForm()) {
+                return;
+            }
+
+            loadingDiv.style.display = 'block';
+            submitBtn.disabled = true;
+
+            try {
+                const token = localStorage.getItem('authToken');
+                if (!token) {
+                    throw new Error('No authentication token found. Please login again.');
+                }
+
+                const response = await fetch('/api/subscription/start-trial', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`,
+                    },
+                    body: JSON.stringify({
+                        email: emailInput.value.trim(),
+                        phone: phoneInput.value.trim(),
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    formSuccess.textContent = 'Trial activated! Redirecting to dashboard...';
+                    formSuccess.style.display = 'block';
+                    
+                    // Redirect to dashboard after 2 seconds
+                    setTimeout(() => {
+                        window.location.href = '/ui/pages/dashboard.html';
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Failed to activate trial');
+                }
+            } catch (error) {
+                formError.textContent = error.message;
+                formError.style.display = 'block';
+                loadingDiv.style.display = 'none';
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Go back handler
+        function goBack() {
+            // Check if user has trial status, if so redirect to dashboard
+            // Otherwise redirect to login
+            const token = localStorage.getItem('authToken');
+            if (token) {
+                window.location.href = '/ui/pages/dashboard.html';
+            } else {
+                window.location.href = '/ui/pages/login.html';
+            }
+        }
+
+        // Pre-fill email if available from login response
+        window.addEventListener('load', () => {
+            const userEmail = localStorage.getItem('userEmail');
+            if (userEmail) {
+                emailInput.value = userEmail;
+                localStorage.removeItem('userEmail'); // Clear after use
+            }
+        });
+    </script>
+</body>
+</html>

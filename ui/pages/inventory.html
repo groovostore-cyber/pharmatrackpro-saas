@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inventory - PharmaTrackPro</title>
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="navbar-root"></div>
+    <main class="container grid">
+      <div class="card">
+        <h3>Add / Update Medicine</h3>
+        <form id="medicineForm" class="grid grid-3">
+          <input id="medName" placeholder="Medicine Name" required />
+          <input id="medMrp" type="number" min="0" step="0.01" placeholder="MRP" required />
+          <input id="medPrice" type="number" min="0" step="0.01" placeholder="Selling Price" required />
+          <input id="medStock" type="number" min="0" step="1" placeholder="Stock Quantity" required />
+          <input id="medExpiry" type="date" placeholder="Expiry Date" />
+          <button class="btn-primary" type="submit">Save Medicine</button>
+        </form>
+        <p id="invMsg" class="muted"></p>
+      </div>
+
+      <div class="card">
+        <div class="toolbar" style="margin-bottom:10px;">
+          <input id="inventorySearch" placeholder="Search medicine" />
+          <button id="refreshInventory">Refresh</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>MRP</th>
+                <th>Selling</th>
+                <th>Stock</th>
+                <th>Expiry</th>
+                <th>Add Stock</th>
+                <th>Expiry Date</th>
+                <th>Update Stock</th>
+              </tr>
+            </thead>
+            <tbody id="inventoryRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="invToast" class="inv-toast" role="status" aria-live="polite"></div>
+
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/inventory.js"></script>
+</body>
+</html>

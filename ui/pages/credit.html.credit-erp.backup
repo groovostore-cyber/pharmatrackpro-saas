@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Credit - PharmaTrackPro</title>
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="navbar-root"></div>
+    <main class="container">
+      <div class="card">
+        <h3>Outstanding Credit</h3>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Phone</th>
+                <th>Outstanding</th>
+                <th>Last Purchase</th>
+              </tr>
+            </thead>
+            <tbody id="creditRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/credit.js"></script>
+</body>
+</html>

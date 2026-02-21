@@ -1,0 +1,10 @@
+const express = require("express");
+const { getCards, getMonthlyRevenue, getTopMedicines } = require("../controllers/dashboardController");
+
+const router = express.Router();
+
+router.get("/cards", getCards);
+router.get("/monthly-revenue", getMonthlyRevenue);
+router.get("/top-medicines", getTopMedicines);
+
+module.exports = router;

@@ -1,0 +1,26 @@
+requireAuth();
+injectNavbar();
+
+async function loadCreditCustomers() {
+  const body = document.getElementById("creditRows");
+  try {
+    const rows = await API.get("/api/customers/credit");
+    if (!rows.length) {
+      body.innerHTML = `<tr><td colspan="4" class="empty-state">No outstanding credit.</td></tr>`;
+      return;
+    }
+    body.innerHTML = rows.map((r) => `
+      <tr>
+        <td>${r.name}</td>
+        <td>${r.phone || "-"}</td>
+        <td class="danger">₹${Number(r.outstanding_credit || 0).toFixed(2)}</td>
+        <td>${r.last_purchase_date || "-"}</td>
+      </tr>
+    `).join("");
+  } catch (error) {
+    console.error(error);
+    body.innerHTML = `<tr><td colspan="4" class="empty-state">Failed to load credit data.</td></tr>`;
+  }
+}
+
+loadCreditCustomers();

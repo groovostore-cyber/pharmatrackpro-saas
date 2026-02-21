@@ -1,0 +1,63 @@
+if (localStorage.getItem("isLoggedIn") !== "true") {
+  window.location.href = "login.html";
+}
+
+function formatCurrency(v) {
+  return `₹${Number(v || 0).toFixed(2)}`;
+}
+
+function logout() {
+  localStorage.removeItem("isLoggedIn");
+  localStorage.removeItem("currentUser");
+  window.location.href = "login.html";
+}
+
+function injectStaticNavbar() {
+  const root = document.getElementById("navbar-root");
+  if (!root) return;
+  const currentUser = localStorage.getItem("currentUser") || "User";
+  root.innerHTML = `
+    <div class="navbar no-print">
+      <div class="brand">PharmaTrackPro</div>
+      <div class="store-name">Welcome, ${currentUser}</div>
+      <div class="nav-links">
+        <a class="nav-link active" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="sales.html">Sales</a>
+        <a class="nav-link" href="inventory.html">Inventory</a>
+        <a class="nav-link" href="credit.html">Credit</a>
+        <a class="nav-link" href="settings.html">Settings</a>
+        <a class="nav-link" href="#" id="logoutBtn">Logout</a>
+      </div>
+    </div>
+  `;
+  document.getElementById("logoutBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    logout();
+  });
+}
+
+function initDashboard() {
+  injectStaticNavbar();
+
+  const cards = [
+    ["Today Revenue", formatCurrency(0)],
+    ["Today Profit", formatCurrency(0)],
+    ["Credit Outstanding", formatCurrency(0)],
+    ["Low Stock Count", 0],
+    ["Expiry Alert", 0],
+  ];
+  const root = document.getElementById("snapshotCards");
+  if (root) {
+    root.innerHTML = cards
+      .map(([k, v]) => `<div class="card"><div class="muted">${k}</div><h2>${v}</h2></div>`)
+      .join("");
+  }
+
+  const doughnut = document.getElementById("revenueDoughnut");
+  if (doughnut) doughnut.innerHTML = `<div class="empty-state">No local analytics data available</div>`;
+
+  const top = document.getElementById("topMedicinesChart");
+  if (top) top.innerHTML = `<div class="empty-state">No sales data available</div>`;
+}
+
+initDashboard();

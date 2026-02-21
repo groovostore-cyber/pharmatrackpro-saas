@@ -1,0 +1,193 @@
+const express = require("express");
+const cors = require("cors");
+const path = require("path");
+const fs = require("fs");
+
+const authService = require("./core/authService");
+const customerService = require("./core/customerService");
+const inventoryService = require("./core/inventoryService");
+const salesService = require("./core/salesService");
+const analyticsService = require("./core/analyticsService");
+const backupService = require("./core/backupService");
+const demoService = require("./core/demoService");
+const db = require("./core/database");
+const dashboardRoutes = require("./routes/dashboard");
+
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use("/api", dashboardRoutes);
+
+app.use("/assets", express.static(path.join(__dirname, "assets")));
+app.use("/ui", express.static(path.join(__dirname, "ui")));
+app.use("/backups", express.static(path.join(__dirname, "backups")));
+app.use("/exports", express.static(path.join(__dirname, "exports")));
+
+function safeHandler(handler) {
+  return (req, res) => {
+    const handleError = (error) => {
+      console.error(error);
+      const message = error?.message || "Internal server error";
+      const isClientError = !String(message).toLowerCase().includes("sqlite") && message !== "Internal server error";
+      res.status(isClientError ? 400 : 500).json({ success: false, message });
+    };
+
+    try {
+      const result = handler(req, res);
+      if (result && typeof result.then === "function") {
+        result.catch(handleError);
+      }
+    } catch (error) {
+      handleError(error);
+    }
+  };
+}
+
+app.post("/api/auth/login", safeHandler((req, res) => {
+  const { username, password } = req.body;
+  const result = authService.login(username, password);
+  res.json({ success: true, data: result });
+}));
+
+app.post("/api/auth/signup", safeHandler((req, res) => {
+  const { username, password, confirmPassword } = req.body;
+  const result = authService.signup(username, password, confirmPassword);
+  res.json({ success: true, message: "Signup successful", data: result });
+}));
+
+app.get("/api/settings", safeHandler((req, res) => {
+  res.json({ success: true, data: db.getSettings() });
+}));
+
+app.put("/api/settings", safeHandler((req, res) => {
+  const { store_name } = req.body;
+  db.updateStoreName(store_name || "PharmaTrackPro Store");
+  res.json({ success: true });
+}));
+
+app.get("/api/customers", safeHandler((req, res) => {
+  const q = req.query.q || "";
+  res.json({ success: true, data: customerService.searchCustomers(q) });
+}));
+
+app.post("/api/customers", safeHandler((req, res) => {
+  const { name, phone } = req.body;
+  const customer = customerService.addCustomer(name, phone);
+  res.json({ success: true, data: customer });
+}));
+
+app.get("/api/customers/credit", safeHandler((req, res) => {
+  res.json({ success: true, data: customerService.listCreditCustomers() });
+}));
+
+app.get("/api/credits", safeHandler((req, res) => {
+  const credits = customerService.listCreditCustomers();
+  const storeName = db.getSettings()?.store_name || "PharmaTrackPro Store";
+  const rows = (credits || []).map((c) => ({
+    customer: { id: c.id, name: c.name, phone: c.phone || "" },
+    phone: c.phone || "",
+    medicines: [],
+    totalAmount: Number(c.total_purchases || 0),
+    paid: Math.max(0, Number(c.total_purchases || 0) - Number(c.outstanding_credit || 0)),
+    due: Number(c.outstanding_credit || 0),
+    status: Number(c.outstanding_credit || 0) > 0 ? "pending" : "paid",
+    createdAt: c.last_purchase_date || null,
+  }));
+  res.json({ success: true, data: { storeName, rows } });
+}));
+
+app.get("/api/medicines", safeHandler((req, res) => {
+  const q = req.query.q || "";
+  res.json({ success: true, data: inventoryService.searchMedicines(q) });
+}));
+
+app.post("/api/medicines", safeHandler((req, res) => {
+  const data = inventoryService.addMedicine(req.body);
+  res.json({ success: true, data });
+}));
+
+app.put("/api/medicines/:id/stock", safeHandler((req, res) => {
+  const data = inventoryService.updateStock(Number(req.params.id), Number(req.body.stock_quantity || 0));
+  res.json({ success: true, data });
+}));
+
+app.post("/api/sales", safeHandler((req, res) => {
+  const data = salesService.createSale(req.body);
+  res.json({ success: true, data });
+}));
+
+app.get("/api/sales/:id", safeHandler((req, res) => {
+  const sale = salesService.getSaleById(Number(req.params.id));
+  res.json({ success: true, data: sale });
+}));
+
+app.get("/api/dashboard/cards", safeHandler((req, res) => {
+  res.json({ success: true, data: analyticsService.getBusinessSnapshot() });
+}));
+
+app.get("/api/dashboard/monthly-revenue", safeHandler((req, res) => {
+  res.json({ success: true, data: analyticsService.getMonthlyRevenueComparison() });
+}));
+
+app.get("/api/dashboard/top-medicines", safeHandler((req, res) => {
+  res.json({ success: true, data: analyticsService.getTopSellingMedicines() });
+}));
+
+app.get("/api/dashboard/stats", safeHandler((req, res) => {
+  const monthly = analyticsService.getMonthlyRevenueComparison();
+  const topRaw = analyticsService.getTopSellingMedicines() || [];
+  const topMedicines = topRaw.map((row) => ({
+    name: row.name,
+    totalSold: Number(row.totalSold ?? row.total_quantity ?? 0),
+  }));
+
+  res.json({
+    success: true,
+    data: {
+      currentMonthRevenue: Number(monthly.currentMonthRevenue ?? monthly.currentMonth ?? 0),
+      lastMonthRevenue: Number(monthly.lastMonthRevenue ?? monthly.lastMonth ?? 0),
+      topMedicines,
+    },
+  });
+}));
+
+app.post("/api/backup/create", safeHandler((req, res) => {
+  const backup = backupService.createBackup();
+  res.json({ success: true, data: backup });
+}));
+
+app.get("/api/backup/list", safeHandler((req, res) => {
+  const backupsDir = path.join(__dirname, "backups");
+  if (!fs.existsSync(backupsDir)) fs.mkdirSync(backupsDir, { recursive: true });
+  const files = fs.readdirSync(backupsDir).filter((f) => f.endsWith(".db"));
+  res.json({ success: true, data: files });
+}));
+
+app.post("/api/backup/restore", safeHandler((req, res) => {
+  const { fileName } = req.body;
+  const restored = backupService.restoreBackup(fileName);
+  res.json({ success: true, data: restored });
+}));
+
+app.get("/api/export/sales/csv", safeHandler((req, res) => {
+  const file = salesService.exportSalesCSV();
+  res.json({ success: true, data: file });
+}));
+
+app.get("/api/export/sales/xlsx", safeHandler((req, res) => {
+  const file = salesService.exportSalesXLSX();
+  res.json({ success: true, data: file });
+}));
+
+app.get("/", (req, res) => {
+  res.redirect("/ui/pages/login.html");
+});
+
+demoService.seedDemoDataIfEmpty();
+
+app.listen(PORT, () => {
+  console.log(`PharmaTrackPro ERP running on http://localhost:${PORT}`);
+});

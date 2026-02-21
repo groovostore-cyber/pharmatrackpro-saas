@@ -1,0 +1,29 @@
+document.getElementById("signupForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const username = document.getElementById("signupUsername").value.trim();
+  const password = document.getElementById("signupPassword").value.trim();
+  const confirmPassword = document.getElementById("signupConfirmPassword").value.trim();
+  const msg = document.getElementById("signupMsg");
+  msg.textContent = "";
+
+  try {
+    if (!username || !password || !confirmPassword) {
+      throw new Error("Please fill all fields.");
+    }
+    if (password !== confirmPassword) {
+      throw new Error("Passwords do not match.");
+    }
+
+    await API.post("/api/auth/signup", { username, password, confirmPassword });
+    msg.className = "success";
+    msg.textContent = "Account created successfully. Redirecting to login...";
+    setTimeout(() => {
+      window.location.href = "login.html";
+    }, 900);
+  } catch (error) {
+    console.error(error);
+    msg.className = "danger";
+    msg.textContent = error.message || "Unable to create account.";
+  }
+});

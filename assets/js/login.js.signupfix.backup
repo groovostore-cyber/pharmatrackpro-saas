@@ -1,0 +1,16 @@
+document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const msg = document.getElementById("loginMsg");
+  msg.textContent = "";
+
+  try {
+    const user = await API.post("/api/auth/login", { username, password });
+    localStorage.setItem("ptp_user", JSON.stringify(user));
+    window.location.href = "/ui/pages/dashboard.html";
+  } catch (error) {
+    console.error(error);
+    msg.textContent = error.message;
+  }
+});

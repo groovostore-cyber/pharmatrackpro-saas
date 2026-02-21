@@ -1,0 +1,74 @@
+requireAuth();
+injectNavbar();
+
+function renderInventoryRows(rows = []) {
+  const body = document.getElementById("inventoryRows");
+  if (!rows.length) {
+    body.innerHTML = `<tr><td colspan="6" class="empty-state">No medicines available.</td></tr>`;
+    return;
+  }
+  body.innerHTML = rows.map((m) => `
+    <tr>
+      <td>${m.name}</td>
+      <td>₹${Number(m.mrp || 0).toFixed(2)}</td>
+      <td>₹${Number(m.selling_price || 0).toFixed(2)}</td>
+      <td class="${Number(m.stock_quantity) < 10 ? "low-stock" : ""}">${m.stock_quantity}</td>
+      <td>${m.expiry_date || "-"}</td>
+      <td>
+        <div class="toolbar">
+          <input id="stock_${m.id}" type="number" min="0" value="${m.stock_quantity}" style="max-width:110px;" />
+          <button onclick="updateStock(${m.id})">Save</button>
+        </div>
+      </td>
+    </tr>
+  `).join("");
+}
+
+async function loadInventory() {
+  try {
+    const q = document.getElementById("inventorySearch").value || "";
+    const rows = await API.get(`/api/medicines?q=${encodeURIComponent(q)}`);
+    renderInventoryRows(rows || []);
+  } catch (error) {
+    console.error(error);
+    renderInventoryRows([]);
+  }
+}
+
+window.updateStock = async function (id) {
+  const stock = Number(document.getElementById(`stock_${id}`).value || 0);
+  try {
+    await API.put(`/api/medicines/${id}/stock`, { stock_quantity: stock });
+    document.getElementById("invMsg").textContent = "Stock updated.";
+    await loadInventory();
+  } catch (error) {
+    console.error(error);
+    document.getElementById("invMsg").textContent = error.message;
+  }
+};
+
+document.getElementById("medicineForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const payload = {
+    name: document.getElementById("medName").value.trim(),
+    mrp: Number(document.getElementById("medMrp").value || 0),
+    selling_price: Number(document.getElementById("medPrice").value || 0),
+    stock_quantity: Number(document.getElementById("medStock").value || 0),
+    expiry_date: document.getElementById("medExpiry").value || null,
+  };
+
+  try {
+    await API.post("/api/medicines", payload);
+    document.getElementById("invMsg").textContent = "Medicine saved.";
+    e.target.reset();
+    await loadInventory();
+  } catch (error) {
+    console.error(error);
+    document.getElementById("invMsg").textContent = error.message;
+  }
+});
+
+document.getElementById("refreshInventory").addEventListener("click", loadInventory);
+document.getElementById("inventorySearch").addEventListener("input", loadInventory);
+
+loadInventory();

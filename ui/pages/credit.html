@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Credit - PharmaTrackPro</title>
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+  <style>
+    .credit-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+    .credit-header h3 { margin: 0; }
+    .credit-stats { display: flex; gap: 32px; font-size: 0.9em; }
+    .stat-item { display: flex; flex-direction: column; }
+    .stat-label { font-size: 0.85em; opacity: 0.7; text-transform: uppercase; margin-bottom: 4px; }
+    .stat-value { font-size: 1.4em; font-weight: 600; color: #333; }
+    .cell-name { font-weight: 600; }
+    .cell-phone { color: #666; }
+    .cell-due { color: #d9534f; font-weight: 600; }
+    .amount-due { font-size: 1.1em; }
+    .badge { display: inline-block; padding: 4px 8px; border-radius: 3px; font-size: 0.85em; font-weight: 600; }
+    .badge-success { background-color: #d4edda; color: #155724; }
+    .badge-danger { background-color: #f8d7da; color: #721c24; }
+    .cell-actions { text-align: center; }
+    .btn-whatsapp { background-color: #25d366; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 0.9em; font-weight: 600; transition: background-color 0.2s; }
+    .btn-whatsapp:hover { background-color: #20ba5a; }
+    .table-wrap table th { background-color: #f5f5f5; font-weight: 600; text-transform: uppercase; font-size: 0.85em; }
+    .table-wrap table tbody tr:hover { background-color: #f9f9f9; }
+    .empty-state { text-align: center; color: #999; padding: 32px 16px; font-style: italic; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="navbar-root"></div>
+    <main class="container">
+      <div class="card">
+        <div class="credit-header">
+          <div>
+            <h3>Credit & Due Management</h3>
+            <p style="margin: 4px 0 0 0; color: #666; font-size: 0.9em;">Track outstanding amounts and send reminders</p>
+          </div>
+          <div class="credit-stats">
+            <div class="stat-item">
+              <span class="stat-label">Pending Dues</span>
+              <span class="stat-value" id="totalPending">₹0.00</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Customers</span>
+              <span class="stat-value" id="totalCustomers">0</span>
+            </div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Customer Name</th>
+                <th>Phone</th>
+                <th>Total Purchase</th>
+                <th>Paid</th>
+                <th>Amount Due</th>
+                <th>Status</th>
+                <th>Since</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="creditRows"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/layout.js"></script>
+  <script>
+    function updateStats(rows) {
+      const totalDue = rows.reduce((sum, r) => sum + Number(r.due || 0), 0);
+      const count = rows.length;
+      document.getElementById("totalPending").textContent = "₹" + totalDue.toFixed(2);
+      document.getElementById("totalCustomers").textContent = count;
+    }
+    window.loadCreditCustomersWithStats = async function() {
+      const body = document.getElementById("creditRows");
+      try {
+        const result = await API.get("/api/credits");
+        const rows = result?.rows || [];
+        updateStats(rows);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+  </script>
+  <script src="/assets/js/credit.js"></script>
+</body>
+</html>

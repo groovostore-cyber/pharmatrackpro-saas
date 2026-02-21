@@ -1,0 +1,21 @@
+const db = require("./database");
+
+function login(username, password) {
+  try {
+    if (!username || !password) {
+      throw new Error("Username and password are required");
+    }
+    const user = db.queryOne("SELECT id, username, role FROM users WHERE username = ? AND password = ?", [username, password]);
+    if (!user) {
+      throw new Error("Invalid credentials");
+    }
+    return user;
+  } catch (error) {
+    console.error("authService.login error:", error);
+    throw error;
+  }
+}
+
+module.exports = {
+  login,
+};

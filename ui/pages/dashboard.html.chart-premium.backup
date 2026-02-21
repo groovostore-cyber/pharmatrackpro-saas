@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - PharmaTrackPro</title>
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="navbar-root"></div>
+    <main class="container grid" style="gap:20px;">
+      <section id="snapshotCards" class="grid grid-5"></section>
+
+      <section class="grid grid-2">
+        <div class="card chart-box">
+          <h3>Monthly Revenue Comparison</h3>
+          <div id="revenueDoughnut" style="position:relative; min-height:280px;">
+            <canvas id="monthlyRevenueChart"></canvas>
+            <div id="monthlyGrowthLabel" class="chart-center-label"></div>
+          </div>
+        </div>
+        <div class="card chart-box">
+          <h3>Top Selling Medicines</h3>
+          <div id="topMedicinesChart" style="min-height:280px;">
+            <canvas id="topMedicinesCanvas"></canvas>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/dashboard.js"></script>
+</body>
+</html>

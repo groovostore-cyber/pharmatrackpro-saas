@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings - PharmaTrackPro</title>
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+  <style>
+    .settings-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+    .form-section {
+      margin-bottom: 24px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #eee;
+    }
+    .form-section:last-child {
+      border-bottom: none;
+    }
+    .form-section h4 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 1.1em;
+      color: #333;
+      font-weight: 600;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+    .form-row.full {
+      grid-template-columns: 1fr;
+    }
+    .form-group {
+      display: flex;
+      flex-direction: column;
+    }
+    .form-group label {
+      font-size: 0.9em;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #555;
+      text-transform: uppercase;
+    }
+    .form-group input,
+    .form-group select {
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1em;
+      font-family: inherit;
+    }
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: #4CAF50;
+      box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+    }
+    .export-buttons {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+    .export-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 16px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background-color 0.2s;
+    }
+    .export-btn:hover {
+      background-color: #0056b3;
+    }
+    .export-btn.success {
+      background-color: #28a745;
+    }
+    .export-btn.success:hover {
+      background-color: #20c997;
+    }
+    .export-btn.warning {
+      background-color: #ff9800;
+    }
+    .export-btn.warning:hover {
+      background-color: #e68900;
+    }
+    .status-message {
+      padding: 12px;
+      border-radius: 4px;
+      margin-top: 12px;
+      font-size: 0.95em;
+      display: none;
+    }
+    .status-message.show {
+      display: block;
+    }
+    .status-message.success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .status-message.error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .status-message.info {
+      background-color: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    .btn-submit {
+      background-color: #4CAF50;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1em;
+      transition: background-color 0.2s;
+    }
+    .btn-submit:hover {
+      background-color: #45a049;
+    }
+    .btn-submit:active {
+      transform: scale(0.98);
+    }
+    .loading {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <div id="navbar-root"></div>
+    <main class="container">
+      <div class="card settings-container">
+        <h3>Settings & Configuration</h3>
+        
+        <!-- Status Message -->
+        <div id="statusMsg" class="status-message"></div>
+
+        <!-- Store Profile Section -->
+        <form id="settingsForm">
+          <div class="form-section">
+            <h4>Store Profile</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="shopName">Shop Name *</label>
+                <input type="text" id="shopName" placeholder="PharmaTrackPro" required />
+              </div>
+              <div class="form-group">
+                <label for="ownerName">Owner Name</label>
+                <input type="text" id="ownerName" placeholder="Owner name" />
+              </div>
+            </div>
+
+            <div class="form-row full">
+              <div class="form-group">
+                <label for="shopAddress">Shop Address</label>
+                <input type="text" id="shopAddress" placeholder="123 Main Street, City, State 123456" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="phoneNumber">Phone Number</label>
+                <input type="tel" id="phoneNumber" placeholder="+91 9876543210" />
+              </div>
+              <div class="form-group">
+                <label for="whatsappNumber">WhatsApp Number</label>
+                <input type="tel" id="whatsappNumber" placeholder="+91 9876543210" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="gstNumber">GST Number</label>
+                <input type="text" id="gstNumber" placeholder="25AABCU1234A2XX" />
+              </div>
+              <div class="form-group">
+                <label for="invoicePrefix">Invoice Prefix</label>
+                <input type="text" id="invoicePrefix" placeholder="INV" />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="currency">Currency</label>
+                <select id="currency">
+                  <option value="INR" selected>₹ Indian Rupee (INR)</option>
+                  <option value="USD">$ US Dollar (USD)</option>
+                  <option value="EUR">€ Euro (EUR)</option>
+                  <option value="GBP">£ British Pound (GBP)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label>&nbsp;</label>
+                <button type="submit" class="btn-submit">Save Settings</button>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        <!-- Subscription Info Section -->
+        <div class="form-section">
+          <h4>📋 Subscription Status</h4>
+          <div id="subscriptionInfo" style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div style="padding: 16px; background-color: #f5f5f5; border-radius: 4px;">
+              <p style="margin: 0 0 8px 0; font-size: 0.85em; color: #666; text-transform: uppercase;">Plan Type</p>
+              <p id="planType" style="margin: 0; font-size: 1.4em; font-weight: 600;">Loading...</p>
+            </div>
+            <div style="padding: 16px; background-color: #f5f5f5; border-radius: 4px;">
+              <p style="margin: 0 0 8px 0; font-size: 0.85em; color: #666; text-transform: uppercase;">Status</p>
+              <p id="subscriptionStatus" style="margin: 0; font-size: 1.4em; font-weight: 600;">Loading...</p>
+            </div>
+            <div style="padding: 16px; background-color: #f5f5f5; border-radius: 4px;">
+              <p style="margin: 0 0 8px 0; font-size: 0.85em; color: #666; text-transform: uppercase;">Trial Ends</p>
+              <p id="trialEnds" style="margin: 0; font-size: 1.4em; font-weight: 600;">N/A</p>
+            </div>
+            <div style="padding: 16px; background-color: #f5f5f5; border-radius: 4px;">
+              <p style="margin: 0 0 8px 0; font-size: 0.85em; color: #666; text-transform: uppercase;">Expires</p>
+              <p id="subscriptionExpires" style="margin: 0; font-size: 1.4em; font-weight: 600;">N/A</p>
+            </div>
+          </div>
+          <div style="margin-top: 16px;">
+            <a href="payment.html" class="btn-submit" style="display: inline-block; text-decoration: none; background-color: #007bff; color: white; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+              View Plans & Upgrade
+            </a>
+          </div>
+        </div>
+
+        <!-- Data Export Section -->
+        <div class="form-section">
+          <h4>📊 Data Export</h4>
+          <p style="color: #666; font-size: 0.95em; margin: 0 0 16px 0;">
+            Export your sales data in different formats for analysis and backup.
+          </p>
+          <div class="export-buttons">
+            <button id="exportCsvBtn" class="export-btn success">
+              <span>📄</span> Export CSV
+            </button>
+            <button id="exportXlsxBtn" class="export-btn success">
+              <span>📊</span> Export XLSX
+            </button>
+            <button id="exportBackupBtn" class="export-btn warning">
+              <span>💾</span> Full Backup
+            </button>
+          </div>
+        </div>
+
+        <!-- Database Info Section -->
+        <div class="form-section">
+          <h4>Database Information</h4>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+            <div style="padding: 12px; background-color: #f5f5f5; border-radius: 4px;">
+              <p style="margin: 0 0 8px 0; font-size: 0.85em; color: #666; text-transform: uppercase;">Total Customers</p>
+              <p id="totalCustomers" style="margin: 0; font-size: 1.8em; font-weight: 600;">Loading...</p>
+            </div>
+            <div style="padding: 12px; background-color: #f5f5f5; border-radius: 4px;">
+              <p style="margin: 0 0 8px 0; font-size: 0.85em; color: #666; text-transform: uppercase;">Total Sales</p>
+              <p id="totalSales" style="margin: 0; font-size: 1.8em; font-weight: 600;">Loading...</p>
+            </div>
+            <div style="padding: 12px; background-color: #f5f5f5; border-radius: 4px;">
+              <p style="margin: 0 0 8px 0; font-size: 0.85em; color: #666; text-transform: uppercase;">Medicines in Stock</p>
+              <p id="totalMedicines" style="margin: 0; font-size: 1.8em; font-weight: 600;">Loading...</p>
+            </div>
+            <div style="padding: 12px; background-color: #f5f5f5; border-radius: 4px;">
+              <p style="margin: 0 0 8px 0; font-size: 0.85em; color: #666; text-transform: uppercase;">Total Revenue</p>
+              <p id="totalRevenue" style="margin: 0; font-size: 1.8em; font-weight: 600;">Loading...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/settings.js"></script>
+</body>
+</html>

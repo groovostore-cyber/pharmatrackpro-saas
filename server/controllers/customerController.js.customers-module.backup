@@ -1,0 +1,67 @@
+const Customer = require("../models/Customer");
+const Sale = require("../models/Sale");
+
+exports.getCustomers = async (req, res) => {
+  try {
+    const q = String(req.query.q || "").trim();
+    const filter = q
+      ? {
+          $or: [
+            { name: { $regex: q, $options: "i" } },
+            { phone: { $regex: q, $options: "i" } },
+          ],
+        }
+      : {};
+    const rows = await Customer.find(filter).sort({ createdAt: -1 });
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("getCustomers error:", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch customers" });
+  }
+};
+
+exports.createCustomer = async (req, res) => {
+  try {
+    const { name, phone, address } = req.body || {};
+    if (!name) return res.status(400).json({ success: false, message: "Name is required" });
+
+    const customerId = `CUST-${Date.now()}`;
+    const doc = await Customer.create({
+      name: String(name).trim(),
+      phone: String(phone || "").trim(),
+      address: String(address || "").trim(),
+      customerId,
+    });
+    return res.json({ success: true, data: doc });
+  } catch (error) {
+    console.error("createCustomer error:", error);
+    return res.status(400).json({ success: false, message: "Failed to save customer" });
+  }
+};
+
+exports.getCreditCustomers = async (_req, res) => {
+  try {
+    const sales = await Sale.find({ due: { $gt: 0 } }).populate("customer").sort({ createdAt: -1 });
+    const map = new Map();
+
+    sales.forEach((s) => {
+      if (!s.customer) return;
+      const id = s.customer._id.toString();
+      const prev = map.get(id) || {
+        _id: s.customer._id,
+        name: s.customer.name,
+        phone: s.customer.phone,
+        outstanding_credit: 0,
+        last_purchase_date: s.createdAt,
+      };
+      prev.outstanding_credit += Number(s.due || 0);
+      if (new Date(s.createdAt) > new Date(prev.last_purchase_date)) prev.last_purchase_date = s.createdAt;
+      map.set(id, prev);
+    });
+
+    return res.json({ success: true, data: Array.from(map.values()) });
+  } catch (error) {
+    console.error("getCreditCustomers error:", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch credit customers" });
+  }
+};

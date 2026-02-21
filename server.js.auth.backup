@@ -1,0 +1,25 @@
+const express = require("express");
+const cors = require("cors");
+
+const app = express();
+const PORT = 5000;
+
+app.use(cors());
+app.use(express.json());
+
+/* =========================
+   DASHBOARD ROUTE REGISTER
+========================= */
+
+const dashboardRoutes = require("./routes/dashboard");
+app.use("/api", dashboardRoutes);
+
+/* =========================
+   STATIC FILES (ALWAYS LAST)
+========================= */
+
+app.use(express.static("ui"));
+
+app.listen(PORT, () => {
+  console.log("Server running on http://localhost:5000");
+});

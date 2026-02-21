@@ -1,0 +1,45 @@
+function showError(message) {
+  const msg = document.getElementById("signupMsg");
+  msg.className = "danger";
+  msg.textContent = message;
+}
+
+function showSuccess(message) {
+  const msg = document.getElementById("signupMsg");
+  msg.className = "success";
+  msg.textContent = message;
+}
+
+document.getElementById("signupForm")?.addEventListener("submit", async function (e) {
+  e.preventDefault();
+
+  const username = document.getElementById("username").value.trim();
+  const password = document.getElementById("password").value.trim();
+  const confirm = document.getElementById("confirmPassword").value.trim();
+
+  if (!username || !password || !confirm) {
+    showError("All fields required");
+    return;
+  }
+
+  if (password !== confirm) {
+    showError("Passwords do not match");
+    return;
+  }
+
+  try {
+    const result = await window.api.signup({ username, password, confirmPassword: confirm });
+
+    if (result.success) {
+      showSuccess("Account created successfully");
+      setTimeout(() => {
+        window.location.href = "login.html";
+      }, 800);
+    } else {
+      showError(result.message || "Signup failed");
+    }
+  } catch (err) {
+    console.error(err);
+    showError("Signup failed");
+  }
+});

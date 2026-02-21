@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Login - PharmaTrackPro</title>
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+</head>
+<body>
+  <div class="login-wrap">
+    <div class="card login-card">
+      <h2 class="brand" style="margin-bottom:14px;">PharmaTrackPro</h2>
+      <p class="muted">Sign in to continue</p>
+      <form id="loginForm" class="grid" style="margin-top:12px;">
+        <input id="username" placeholder="Username" required />
+        <input id="password" type="password" placeholder="Password" required />
+        <button class="btn-primary" type="submit">Login</button>
+      </form>
+      <p id="loginMsg" class="danger" style="margin-top:10px;"></p>
+      <p class="muted" style="font-size:12px; margin-top:8px;">
+        Create New Account / <a href="signup.html" style="color:#06b6d4;">Sign Up</a>
+      </p>
+      <p class="muted" style="font-size:12px; margin-top:4px;">
+        Don't have an account? <a href="signup.html" style="color:#06b6d4;">Sign Up</a>
+      </p>
+    </div>
+  </div>
+
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/login.js"></script>
+</body>
+</html>

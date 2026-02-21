@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Settings - PharmaTrackPro</title>
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="navbar-root"></div>
+    <main class="container grid grid-2">
+      <div class="card">
+        <h3>Store Settings</h3>
+        <form id="settingsForm" class="grid">
+          <input id="storeName" placeholder="Store name" required />
+          <button class="btn-primary" type="submit">Save</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Backup & Restore</h3>
+        <div class="toolbar">
+          <button id="createBackupBtn">Create Backup</button>
+          <select id="backupSelect"></select>
+          <button id="restoreBackupBtn" class="btn-danger">Restore Backup</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Export Sales</h3>
+        <div class="toolbar">
+          <button id="exportCsvBtn">Export CSV</button>
+          <button id="exportXlsxBtn">Export XLSX</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Status</h3>
+        <p id="settingsMsg" class="muted"></p>
+      </div>
+    </main>
+  </div>
+
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/settings.js"></script>
+</body>
+</html>

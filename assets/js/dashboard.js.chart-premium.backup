@@ -1,0 +1,158 @@
+if (!API.getToken()) {
+  window.location.href = "login.html";
+}
+
+let monthlyChart;
+let topMedicinesChart;
+
+function formatCurrency(v) {
+  return `₹${Number(v || 0).toFixed(2)}`;
+}
+
+function logout() {
+  API.clearToken();
+  window.location.href = "login.html";
+}
+
+function injectStaticNavbar() {
+  const root = document.getElementById("navbar-root");
+  if (!root) return;
+  root.innerHTML = `
+    <div class="navbar no-print">
+      <div class="brand">PharmaTrackPro</div>
+      <div class="store-name">Business Dashboard</div>
+      <div class="nav-links">
+        <a class="nav-link active" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="sales.html">Sales</a>
+        <a class="nav-link" href="customers.html">Customers</a>
+        <a class="nav-link" href="inventory.html">Inventory</a>
+        <a class="nav-link" href="credit.html">Credit</a>
+        <a class="nav-link" href="settings.html">Settings</a>
+        <a class="nav-link" href="#" id="logoutBtn">Logout</a>
+      </div>
+    </div>
+  `;
+  document.getElementById("logoutBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    logout();
+  });
+}
+
+function buildMonthlyChart(data) {
+  const el = document.getElementById("monthlyRevenueChart");
+  const center = document.getElementById("monthlyGrowthLabel");
+  if (!el || typeof Chart === "undefined") return;
+
+  const currentMonth = Number(data.currentMonthRevenue || 0);
+  const lastMonth = Number(data.lastMonthRevenue || 0);
+  const growth = Number(data.growthPercent || 0);
+  const dir = growth >= 0 ? "▲" : "▼";
+  center.innerHTML = `${dir} ${Math.abs(growth).toFixed(1)}%`;
+  center.className = `chart-center-label ${growth >= 0 ? "success" : "danger"}`;
+
+  if (monthlyChart) monthlyChart.destroy();
+  monthlyChart = new Chart(el, {
+    type: "pie",
+    data: {
+      labels: ["Current Month", "Last Month"],
+      datasets: [
+        {
+          data: [currentMonth, lastMonth],
+          backgroundColor: ["#22c55e", "#f59e0b"],
+          borderWidth: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { labels: { color: "#e2e8f0" } },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `${ctx.label}: ₹${Number(ctx.raw || 0).toFixed(2)}`,
+          },
+        },
+      },
+      animation: { duration: 900 },
+    },
+  });
+}
+
+function buildTopMedicinesChart(rows = []) {
+  const el = document.getElementById("topMedicinesCanvas");
+  const wrap = document.getElementById("topMedicinesChart");
+  if (!el || !wrap || typeof Chart === "undefined") return;
+  if (!rows.length) {
+    wrap.innerHTML = `<div class="empty-state">No sales data available</div>`;
+    return;
+  }
+
+  if (topMedicinesChart) topMedicinesChart.destroy();
+  topMedicinesChart = new Chart(el, {
+    type: "bar",
+    data: {
+      labels: rows.map((r) => r.name),
+      datasets: [
+        {
+          data: rows.map((r) => Number(r.totalSold || 0)),
+          backgroundColor: "#2563eb",
+          borderRadius: 8,
+          barThickness: 16,
+        },
+      ],
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 850 },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => `Total quantity sold: ${ctx.raw}`,
+          },
+        },
+      },
+      scales: {
+        x: { ticks: { color: "#cbd5e1" }, grid: { color: "rgba(148,163,184,.2)" } },
+        y: { ticks: { color: "#cbd5e1" }, grid: { display: false } },
+      },
+    },
+  });
+}
+
+async function initDashboard() {
+  injectStaticNavbar();
+  try {
+    const [cardsData, monthlyData, topData] = await Promise.all([
+      API.get("/api/dashboard/cards"),
+      API.get("/api/dashboard/monthly-revenue"),
+      API.get("/api/dashboard/top-medicines"),
+    ]);
+
+    const cards = [
+      ["Today Revenue", formatCurrency(cardsData.todayRevenue)],
+      ["Today Profit", formatCurrency(cardsData.todayProfit)],
+      ["Credit Outstanding", formatCurrency(cardsData.creditOutstanding)],
+      ["Low Stock Count", cardsData.lowStockCount],
+      ["Expiry Alert", cardsData.expiryAlert],
+    ];
+    const root = document.getElementById("snapshotCards");
+    if (root) {
+      root.innerHTML = cards
+        .map(([k, v]) => `<div class="card"><div class="muted">${k}</div><h2>${v}</h2></div>`)
+        .join("");
+    }
+
+    buildMonthlyChart(monthlyData || {});
+    buildTopMedicinesChart(topData || []);
+  } catch (error) {
+    console.error(error);
+    const root = document.getElementById("snapshotCards");
+    if (root) root.innerHTML = `<div class="card">Failed to load dashboard.</div>`;
+  }
+}
+
+initDashboard();

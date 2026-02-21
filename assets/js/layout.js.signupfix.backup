@@ -1,0 +1,47 @@
+function activePath() {
+  const full = window.location.pathname;
+  return full.substring(full.lastIndexOf("/") + 1);
+}
+
+async function injectNavbar() {
+  const root = document.getElementById("navbar-root");
+  if (!root) return;
+  let storeName = "PharmaTrackPro Store";
+  try {
+    const settings = await API.get("/api/settings");
+    storeName = settings.store_name || storeName;
+  } catch (e) {
+    console.error(e);
+  }
+
+  const page = activePath();
+  const link = (href, label) => `<a class="nav-link ${page === href ? "active" : ""}" href="/ui/pages/${href}">${label}</a>`;
+
+  root.innerHTML = `
+    <div class="navbar no-print">
+      <div class="brand">PharmaTrackPro</div>
+      <div class="store-name">${storeName}</div>
+      <div class="nav-links">
+        ${link("dashboard.html", "Dashboard")}
+        ${link("sales.html", "Sales")}
+        ${link("inventory.html", "Inventory")}
+        ${link("credit.html", "Credit")}
+        ${link("settings.html", "Settings")}
+        <a class="nav-link" href="/ui/pages/login.html" onclick="localStorage.removeItem('ptp_user')">Logout</a>
+      </div>
+    </div>
+  `;
+}
+
+function requireAuth() {
+  const isLoggedIn = localStorage.getItem("isLoggedIn") === "true";
+  if (!isLoggedIn) {
+    window.location.href = "/ui/pages/login.html";
+  }
+}
+
+function logoutUser() {
+  localStorage.removeItem("ptp_user");
+  localStorage.removeItem("isLoggedIn");
+  localStorage.removeItem("currentUser");
+}

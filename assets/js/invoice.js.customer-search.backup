@@ -1,0 +1,88 @@
+requireAuth();
+injectNavbar();
+
+function qs(name) {
+  const p = new URLSearchParams(window.location.search);
+  return p.get(name);
+}
+
+function money(v) {
+  return `₹${Number(v || 0).toFixed(2)}`;
+}
+
+async function loadInvoice() {
+  const saleId = qs("saleId");
+  const root = document.getElementById("invoiceContent");
+  if (!saleId) {
+    root.innerHTML = `<p>Invalid sale ID.</p>`;
+    return;
+  }
+
+  try {
+    const [sale, settings] = await Promise.all([
+      API.get(`/api/sales/${saleId}`),
+      API.get("/api/settings"),
+    ]);
+    if (!sale) {
+      root.innerHTML = `<p>Sale not found.</p>`;
+      return;
+    }
+
+    root.innerHTML = `
+      <h2 style="text-align:center; margin:0;">${settings.store_name || "PharmaTrackPro Store"}</h2>
+      <p style="text-align:center; margin:6px 0 20px;">Tax Invoice</p>
+
+      <div style="display:flex; justify-content:space-between; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+        <div>
+          <strong>Invoice #:</strong> ${sale._id}<br/>
+          <strong>Date:</strong> ${new Date(sale.createdAt || Date.now()).toLocaleString()}
+        </div>
+        <div>
+          <strong>Customer:</strong> ${sale.customer?.name || "Walk-in Customer"}<br/>
+          <strong>Phone:</strong> ${sale.customer?.phone || "-"}
+        </div>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Medicine</th>
+            <th>Qty</th>
+            <th>Price</th>
+            <th>Disc %</th>
+            <th>Line Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${(sale.items || []).map((item) => `
+            <tr>
+              <td>${item.name}</td>
+              <td>${item.quantity}</td>
+              <td>${money(item.price)}</td>
+              <td>${Number(item.itemDiscount || 0).toFixed(2)}%</td>
+              <td>${money(item.lineTotal)}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+
+      <div style="margin-top:16px; display:flex; justify-content:flex-end;">
+        <table style="max-width:380px;">
+          <tr><td>Subtotal</td><td>${money(sale.subtotal)}</td></tr>
+          <tr><td>Discount</td><td>${money(sale.discount)}</td></tr>
+          <tr><td>GST</td><td>${money(sale.gst)}</td></tr>
+          <tr><td><strong>Final Total</strong></td><td><strong>${money(sale.total)}</strong></td></tr>
+          <tr><td>Paid</td><td>${money(sale.paid)}</td></tr>
+          <tr><td>Due</td><td>${money(sale.due)}</td></tr>
+        </table>
+      </div>
+
+      <p style="margin-top:24px; text-align:center;">Thank you for choosing us!</p>
+    `;
+  } catch (error) {
+    console.error(error);
+    root.innerHTML = `<p>Failed to load invoice.</p>`;
+  }
+}
+
+loadInvoice();

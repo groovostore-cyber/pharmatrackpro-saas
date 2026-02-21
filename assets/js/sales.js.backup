@@ -1,0 +1,214 @@
+requireAuth();
+injectNavbar();
+
+const state = {
+  medicines: [],
+  customerOptions: [],
+  selectedCustomer: null,
+  rowId: 1,
+  lastSaleId: null,
+};
+
+function money(v) {
+  return Number(v || 0).toFixed(2);
+}
+
+function addRow(prefill = {}) {
+  const tbody = document.getElementById("salesRows");
+  const id = state.rowId++;
+  const tr = document.createElement("tr");
+  tr.dataset.rowId = String(id);
+  tr.innerHTML = `
+    <td>
+      <input list="medList_${id}" class="med-search" placeholder="Search medicine" value="${prefill.name || ""}" />
+      <datalist id="medList_${id}"></datalist>
+      <input type="hidden" class="med-id" value="${prefill.medicine_id || ""}" />
+    </td>
+    <td><input type="number" class="qty" min="1" value="${prefill.quantity || 1}" /></td>
+    <td><input type="number" class="price" min="0" step="0.01" value="${prefill.price || 0}" readonly /></td>
+    <td><input type="number" class="disc" min="0" max="100" step="0.01" value="${prefill.discount_percent || 0}" /></td>
+    <td>₹<span class="line-total">0.00</span></td>
+    <td><button class="btn-danger remove-row">Remove</button></td>
+  `;
+  tbody.appendChild(tr);
+  bindRow(tr);
+  recalc();
+}
+
+function bindRow(tr) {
+  const search = tr.querySelector(".med-search");
+  const list = tr.querySelector("datalist");
+  const medIdInput = tr.querySelector(".med-id");
+  const priceInput = tr.querySelector(".price");
+
+  search.addEventListener("input", () => {
+    const q = search.value.toLowerCase();
+    const filtered = state.medicines.filter((m) => m.name.toLowerCase().includes(q));
+    list.innerHTML = filtered.map((m) => `<option value="${m.name}"></option>`).join("");
+
+    const exact = state.medicines.find((m) => m.name.toLowerCase() === q);
+    if (exact) {
+      medIdInput.value = exact.id;
+      priceInput.value = exact.selling_price;
+      recalc();
+    }
+  });
+
+  ["input", "change"].forEach((evt) => {
+    tr.querySelector(".qty").addEventListener(evt, recalc);
+    tr.querySelector(".disc").addEventListener(evt, recalc);
+  });
+
+  tr.querySelector(".remove-row").addEventListener("click", () => {
+    tr.remove();
+    recalc();
+  });
+}
+
+function recalc() {
+  let subtotal = 0;
+  document.querySelectorAll("#salesRows tr").forEach((tr) => {
+    const qty = Number(tr.querySelector(".qty").value || 0);
+    const price = Number(tr.querySelector(".price").value || 0);
+    const disc = Number(tr.querySelector(".disc").value || 0);
+    const line = (price * qty) - ((price * qty) * (disc / 100));
+    subtotal += line;
+    tr.querySelector(".line-total").textContent = money(line);
+  });
+
+  const overallDiscPct = Number(document.getElementById("overallDiscount").value || 0);
+  const gstPct = Number(document.getElementById("gstPercent").value || 0);
+  const paid = Number(document.getElementById("paidAmount").value || 0);
+
+  const discountAmount = subtotal * (overallDiscPct / 100);
+  const gstAmount = (subtotal - discountAmount) * (gstPct / 100);
+  const finalTotal = subtotal - discountAmount + gstAmount;
+  const due = finalTotal - paid;
+
+  document.getElementById("subtotal").textContent = money(subtotal);
+  document.getElementById("discountAmount").textContent = money(discountAmount);
+  document.getElementById("gstAmount").textContent = money(gstAmount);
+  document.getElementById("finalTotal").textContent = money(finalTotal);
+  document.getElementById("paidView").textContent = money(paid);
+  document.getElementById("dueAmount").textContent = money(due);
+}
+
+async function loadMedicines() {
+  state.medicines = await API.get("/api/medicines?q=");
+}
+
+async function loadCustomers(query = "") {
+  state.customerOptions = await API.get(`/api/customers?q=${encodeURIComponent(query)}`);
+  const list = document.getElementById("customerList");
+  list.innerHTML = state.customerOptions.map((c) => `<option value="${c.name} (${c.phone || ""})"></option>`).join("");
+}
+
+function updateSelectedCustomerView() {
+  const el = document.getElementById("selectedCustomer");
+  if (!state.selectedCustomer) {
+    el.textContent = "Walk-in customer";
+    return;
+  }
+  el.textContent = `${state.selectedCustomer.name} | Purchases: ₹${money(state.selectedCustomer.total_purchases)} | Credit: ₹${money(state.selectedCustomer.outstanding_credit)} | Last: ${state.selectedCustomer.last_purchase_date || "-"}`;
+}
+
+async function bindCustomerControls() {
+  const search = document.getElementById("customerSearch");
+  const newBox = document.getElementById("newCustomerBox");
+  search.addEventListener("input", async () => {
+    await loadCustomers(search.value);
+    const value = search.value.toLowerCase();
+    const found = state.customerOptions.find((c) => c.name.toLowerCase() === value || `${c.name} (${c.phone || ""})`.toLowerCase() === value);
+    if (found) {
+      state.selectedCustomer = found;
+      newBox.style.display = "none";
+    } else {
+      state.selectedCustomer = null;
+      newBox.style.display = search.value.trim() ? "block" : "none";
+    }
+    updateSelectedCustomerView();
+  });
+
+  document.getElementById("saveCustomerBtn").addEventListener("click", async () => {
+    const name = document.getElementById("newCustomerName").value.trim() || search.value.trim();
+    const phone = document.getElementById("newCustomerPhone").value.trim();
+    if (!name) return;
+    try {
+      const customer = await API.post("/api/customers", { name, phone });
+      state.selectedCustomer = customer;
+      search.value = `${customer.name} (${customer.phone || ""})`;
+      document.getElementById("newCustomerBox").style.display = "none";
+      updateSelectedCustomerView();
+      await loadCustomers();
+    } catch (error) {
+      console.error(error);
+    }
+  });
+}
+
+function collectItems() {
+  const items = [];
+  document.querySelectorAll("#salesRows tr").forEach((tr) => {
+    const medicineId = Number(tr.querySelector(".med-id").value || 0);
+    const quantity = Number(tr.querySelector(".qty").value || 0);
+    const discount_percent = Number(tr.querySelector(".disc").value || 0);
+    if (medicineId && quantity > 0) items.push({ medicine_id: medicineId, quantity, discount_percent });
+  });
+  return items;
+}
+
+async function submitSale() {
+  const msg = document.getElementById("salesMsg");
+  msg.textContent = "";
+  try {
+    const items = collectItems();
+    if (!items.length) throw new Error("Please add at least one valid medicine row.");
+    const data = {
+      customer_id: state.selectedCustomer?.id || null,
+      overall_discount_percent: Number(document.getElementById("overallDiscount").value || 0),
+      gst_percent: Number(document.getElementById("gstPercent").value || 0),
+      paid: Number(document.getElementById("paidAmount").value || 0),
+      items,
+    };
+    const sale = await API.post("/api/sales", data);
+    state.lastSaleId = sale.id;
+    msg.textContent = `Sale #${sale.id} completed successfully.`;
+    document.getElementById("printInvoiceBtn").style.display = "inline-block";
+    await loadMedicines();
+  } catch (error) {
+    console.error(error);
+    msg.textContent = error.message;
+  }
+}
+
+function bindSummaryControls() {
+  ["overallDiscount", "gstPercent", "paidAmount"].forEach((id) => {
+    document.getElementById(id).addEventListener("input", recalc);
+    document.getElementById(id).addEventListener("change", recalc);
+  });
+}
+
+async function initSales() {
+  try {
+    await loadMedicines();
+    await loadCustomers();
+    updateSelectedCustomerView();
+    await bindCustomerControls();
+    bindSummaryControls();
+
+    document.getElementById("addMedicineRow").addEventListener("click", () => addRow());
+    document.getElementById("submitSale").addEventListener("click", submitSale);
+    document.getElementById("printInvoiceBtn").addEventListener("click", () => {
+      if (state.lastSaleId) {
+        window.location.href = `/ui/pages/invoice.html?saleId=${state.lastSaleId}`;
+      }
+    });
+
+    addRow();
+  } catch (error) {
+    console.error(error);
+    document.getElementById("salesMsg").textContent = "Failed to initialize sales page.";
+  }
+}
+
+initSales();

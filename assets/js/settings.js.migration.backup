@@ -1,0 +1,84 @@
+requireAuth();
+injectNavbar();
+
+const msg = document.getElementById("settingsMsg");
+
+async function loadSettings() {
+  try {
+    const settings = await API.get("/api/settings");
+    document.getElementById("storeName").value = settings.store_name || "";
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+async function loadBackups() {
+  try {
+    const files = await API.get("/api/backup/list");
+    const select = document.getElementById("backupSelect");
+    select.innerHTML = files.length
+      ? files.map((f) => `<option value="${f}">${f}</option>`).join("")
+      : `<option value="">No backups found</option>`;
+  } catch (error) {
+    console.error(error);
+  }
+}
+
+document.getElementById("settingsForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  try {
+    await API.put("/api/settings", { store_name: document.getElementById("storeName").value.trim() });
+    msg.textContent = "Store settings saved.";
+    await injectNavbar();
+  } catch (error) {
+    console.error(error);
+    msg.textContent = error.message;
+  }
+});
+
+document.getElementById("createBackupBtn").addEventListener("click", async () => {
+  try {
+    const backup = await API.post("/api/backup/create", {});
+    msg.innerHTML = `Backup created: <a href="${backup.url}" target="_blank">${backup.fileName}</a>`;
+    await loadBackups();
+  } catch (error) {
+    console.error(error);
+    msg.textContent = error.message;
+  }
+});
+
+document.getElementById("restoreBackupBtn").addEventListener("click", async () => {
+  const fileName = document.getElementById("backupSelect").value;
+  if (!fileName) return;
+  if (!confirm(`Are you sure you want to restore backup ${fileName}?`)) return;
+  try {
+    await API.post("/api/backup/restore", { fileName });
+    msg.textContent = "Backup restored successfully. Please refresh pages.";
+  } catch (error) {
+    console.error(error);
+    msg.textContent = error.message;
+  }
+});
+
+document.getElementById("exportCsvBtn").addEventListener("click", async () => {
+  try {
+    const file = await API.get("/api/export/sales/csv");
+    window.open(file.url, "_blank");
+  } catch (error) {
+    console.error(error);
+    msg.textContent = error.message;
+  }
+});
+
+document.getElementById("exportXlsxBtn").addEventListener("click", async () => {
+  try {
+    const file = await API.get("/api/export/sales/xlsx");
+    window.open(file.url, "_blank");
+  } catch (error) {
+    console.error(error);
+    msg.textContent = error.message;
+  }
+});
+
+loadSettings();
+loadBackups();

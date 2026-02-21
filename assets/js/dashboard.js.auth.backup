@@ -1,0 +1,78 @@
+requireAuth();
+injectNavbar();
+
+function formatCurrency(v) {
+  return `₹${Number(v || 0).toFixed(2)}`;
+}
+
+function renderCards(data) {
+  const root = document.getElementById("snapshotCards");
+  const cards = [
+    ["Today Revenue", formatCurrency(data.todayRevenue)],
+    ["Today Profit", formatCurrency(data.todayProfit)],
+    ["Credit Outstanding", formatCurrency(data.creditOutstanding)],
+    ["Low Stock Count", data.lowStockCount],
+    ["Expiry Alert", data.expiryAlert],
+  ];
+  root.innerHTML = cards.map(([k, v]) => `<div class="card"><div class="muted">${k}</div><h2>${v}</h2></div>`).join("");
+}
+
+function renderDoughnut(data) {
+  const root = document.getElementById("revenueDoughnut");
+  const total = Number(data.currentMonth || 0) + Number(data.lastMonth || 0);
+  const currentAngle = total ? (Number(data.currentMonth || 0) / total) * 360 : 0;
+  const directionArrow = data.direction === "up" ? "↑" : "↓";
+  const directionClass = data.direction === "up" ? "success" : "danger";
+
+  root.innerHTML = `
+    <div style="display:grid;place-items:center;height:240px;position:relative;">
+      <div style="width:190px;height:190px;border-radius:50%;background:conic-gradient(#2563eb 0deg ${currentAngle}deg,#06b6d4 ${currentAngle}deg 360deg);display:grid;place-items:center;">
+        <div style="width:120px;height:120px;border-radius:50%;background:#1e293b;display:grid;place-items:center;text-align:center;padding:8px;">
+          <div>
+            <div class="muted" style="font-size:12px;">Growth</div>
+            <div class="${directionClass}" style="font-size:22px;font-weight:800;">${directionArrow} ${Math.abs(Number(data.growthPercent || 0)).toFixed(2)}%</div>
+          </div>
+        </div>
+      </div>
+      <div class="muted" style="margin-top:14px; text-align:center;">Current: ${formatCurrency(data.currentMonth)} | Last: ${formatCurrency(data.lastMonth)}</div>
+    </div>
+  `;
+}
+
+function renderTopMedicines(list) {
+  const root = document.getElementById("topMedicinesChart");
+  if (!list || !list.length) {
+    root.innerHTML = `<div class="empty-state">No sales data available</div>`;
+    return;
+  }
+  const max = Math.max(...list.map((r) => Number(r.total_quantity || 0)), 1);
+  root.innerHTML = `
+    <div class="grid" style="gap:10px;margin-top:10px;">
+      ${list.map((r) => {
+        const w = (Number(r.total_quantity || 0) / max) * 100;
+        return `<div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;"><span>${r.name}</span><span class="muted">${r.total_quantity}</span></div>
+          <div style="height:10px;background:#0f1b32;border-radius:999px;overflow:hidden;"><div style="height:100%;width:${w}%;background:linear-gradient(90deg,#2563eb,#06b6d4);"></div></div>
+        </div>`;
+      }).join("")}
+    </div>
+  `;
+}
+
+async function initDashboard() {
+  try {
+    const [cards, monthly, top] = await Promise.all([
+      API.get("/api/dashboard/cards"),
+      API.get("/api/dashboard/monthly-revenue"),
+      API.get("/api/dashboard/top-medicines"),
+    ]);
+    renderCards(cards || {});
+    renderDoughnut(monthly || {});
+    renderTopMedicines(top || []);
+  } catch (error) {
+    console.error(error);
+    document.getElementById("snapshotCards").innerHTML = `<div class="card">Unable to load dashboard.</div>`;
+  }
+}
+
+initDashboard();

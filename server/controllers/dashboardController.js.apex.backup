@@ -1,0 +1,109 @@
+const Sale = require("../models/Sale");
+const Medicine = require("../models/Medicine");
+
+function startOfDay(d = new Date()) {
+  const x = new Date(d);
+  x.setHours(0, 0, 0, 0);
+  return x;
+}
+
+exports.getCards = async (_req, res) => {
+  try {
+    const today = startOfDay();
+    const todaySales = await Sale.find({ createdAt: { $gte: today } });
+    const allSales = await Sale.find();
+    const medicines = await Medicine.find();
+
+    const todayRevenue = todaySales.reduce((a, s) => a + Number(s.total || 0), 0);
+    const todayProfit = todaySales.reduce((a, s) => a + Math.max(0, Number(s.total || 0) - Number(s.subtotal || 0) * 0.85), 0);
+    const creditOutstanding = allSales.reduce((a, s) => a + Math.max(0, Number(s.due || 0)), 0);
+    const lowStockCount = medicines.filter((m) => Number(m.stock || 0) < 10).length;
+
+    return res.json({
+      success: true,
+      data: { todayRevenue, todayProfit, creditOutstanding, lowStockCount, expiryAlert: 0 },
+    });
+  } catch (error) {
+    console.error("getCards error:", error);
+    return res.status(500).json({ success: false, message: "Failed to load dashboard cards" });
+  }
+};
+
+exports.getMonthlyRevenue = async (_req, res) => {
+  try {
+    const now = new Date();
+    const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+
+    const agg = await Sale.aggregate([
+      { $match: { createdAt: { $gte: lastMonthStart } } },
+      {
+        $project: {
+          monthBucket: {
+            $dateToString: {
+              format: "%Y-%m",
+              date: "$createdAt",
+            },
+          },
+          revenue: { $ifNull: ["$finalTotal", "$total"] },
+        },
+      },
+      {
+        $group: {
+          _id: "$monthBucket",
+          totalRevenue: { $sum: "$revenue" },
+        },
+      },
+    ]);
+
+    const currentKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+    const lastDate = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const lastKey = `${lastDate.getFullYear()}-${String(lastDate.getMonth() + 1).padStart(2, "0")}`;
+
+    const map = new Map(agg.map((r) => [r._id, Number(r.totalRevenue || 0)]));
+    const currentMonth = map.get(currentKey) || 0;
+    const lastMonth = map.get(lastKey) || 0;
+
+    const growthPercent = lastMonth === 0 ? (currentMonth > 0 ? 100 : 0) : ((currentMonth - lastMonth) / lastMonth) * 100;
+    return res.json({
+      success: true,
+      data: {
+        currentMonthRevenue: currentMonth,
+        lastMonthRevenue: lastMonth,
+        growthPercent,
+        direction: growthPercent >= 0 ? "up" : "down",
+      },
+    });
+  } catch (error) {
+    console.error("getMonthlyRevenue error:", error);
+    return res.status(500).json({ success: false, message: "Failed to load monthly revenue" });
+  }
+};
+
+exports.getTopMedicines = async (_req, res) => {
+  try {
+    const rows = await Sale.aggregate([
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.name",
+          totalSold: { $sum: { $ifNull: ["$items.qty", "$items.quantity"] } },
+        },
+      },
+      { $sort: { totalSold: -1 } },
+      { $limit: 5 },
+      {
+        $project: {
+          _id: 0,
+          name: "$_id",
+          totalSold: 1,
+        },
+      },
+    ]);
+
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("getTopMedicines error:", error);
+    return res.status(500).json({ success: false, message: "Failed to load top medicines" });
+  }
+};

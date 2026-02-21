@@ -1,0 +1,30 @@
+const mongoose = require("mongoose");
+
+const saleItemSchema = new mongoose.Schema(
+  {
+    medicine: { type: mongoose.Schema.Types.ObjectId, ref: "Medicine", required: true },
+    name: { type: String, required: true },
+    quantity: { type: Number, required: true, min: 1 },
+    price: { type: Number, required: true, min: 0 },
+    itemDiscount: { type: Number, default: 0, min: 0 },
+    lineTotal: { type: Number, required: true, min: 0 },
+  },
+  { _id: false }
+);
+
+const saleSchema = new mongoose.Schema(
+  {
+    customer: { type: mongoose.Schema.Types.ObjectId, ref: "Customer", default: null },
+    items: { type: [saleItemSchema], default: [] },
+    subtotal: { type: Number, required: true, min: 0 },
+    gst: { type: Number, required: true, min: 0 },
+    discount: { type: Number, required: true, min: 0 },
+    total: { type: Number, required: true, min: 0 },
+    paid: { type: Number, required: true, min: 0 },
+    due: { type: Number, required: true },
+    createdAt: { type: Date, default: Date.now },
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model("Sale", saleSchema);

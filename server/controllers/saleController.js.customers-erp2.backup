@@ -1,0 +1,79 @@
+const Sale = require("../models/Sale");
+const Medicine = require("../models/Medicine");
+
+exports.createSale = async (req, res) => {
+  try {
+    const { customer, items = [], subtotal = 0, gst = 0, discount = 0, total = 0, paid = 0, due = 0 } = req.body || {};
+    if (!Array.isArray(items) || !items.length) {
+      return res.status(400).json({ success: false, message: "At least one sale item is required" });
+    }
+
+    const normalizedItems = [];
+    for (const item of items) {
+      const medicine = await Medicine.findById(item.medicine);
+      if (!medicine) return res.status(400).json({ success: false, message: "Invalid medicine selected" });
+
+      const qty = Number(item.quantity || 0);
+      if (qty < 1) return res.status(400).json({ success: false, message: "Quantity must be at least 1" });
+      if (medicine.stock < qty) {
+        return res.status(400).json({ success: false, message: `Insufficient stock for ${medicine.name}` });
+      }
+
+      const price = Number(item.price ?? medicine.sellingPrice ?? 0);
+      const itemDiscount = Number(item.itemDiscount || 0);
+      const lineTotal = Number(item.lineTotal || (price * qty) - ((price * qty) * (itemDiscount / 100)));
+
+      normalizedItems.push({
+        medicine: medicine._id,
+        name: medicine.name,
+        quantity: qty,
+        price,
+        itemDiscount,
+        lineTotal,
+      });
+    }
+
+    for (const item of normalizedItems) {
+      await Medicine.findByIdAndUpdate(item.medicine, { $inc: { stock: -item.quantity } });
+    }
+
+    const sale = await Sale.create({
+      customer: customer || null,
+      items: normalizedItems,
+      subtotal: Number(subtotal || 0),
+      gst: Number(gst || 0),
+      discount: Number(discount || 0),
+      total: Number(total || 0),
+      paid: Number(paid || 0),
+      due: Number(due || 0),
+      createdAt: new Date(),
+    });
+
+    const populated = await Sale.findById(sale._id).populate("customer").populate("items.medicine");
+    return res.json({ success: true, data: populated });
+  } catch (error) {
+    console.error("createSale error:", error);
+    return res.status(500).json({ success: false, message: "Failed to create sale" });
+  }
+};
+
+exports.getSales = async (_req, res) => {
+  try {
+    const rows = await Sale.find().populate("customer").sort({ createdAt: -1 });
+    return res.json({ success: true, data: rows });
+  } catch (error) {
+    console.error("getSales error:", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch sales" });
+  }
+};
+
+exports.getSaleById = async (req, res) => {
+  try {
+    const sale = await Sale.findById(req.params.id).populate("customer").populate("items.medicine");
+    if (!sale) return res.status(404).json({ success: false, message: "Sale not found" });
+    return res.json({ success: true, data: sale });
+  } catch (error) {
+    console.error("getSaleById error:", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch sale" });
+  }
+};

@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sales - PharmaTrackPro</title>
+  <link rel="stylesheet" href="/assets/css/styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div id="navbar-root"></div>
+    <main class="container grid" style="gap:18px;">
+      <div class="card">
+        <h3>Create Sale</h3>
+        <div class="grid grid-2">
+          <div>
+            <label>Search Customer</label>
+            <input id="customerSearch" placeholder="Type name or phone" list="customerList" />
+            <datalist id="customerList"></datalist>
+            <div id="selectedCustomer" class="muted" style="margin-top:6px;"></div>
+          </div>
+          <div id="newCustomerBox" style="display:none;">
+            <label>Add New Customer</label>
+            <div class="grid" style="grid-template-columns:1fr 1fr;">
+              <input id="newCustomerName" placeholder="Name" />
+              <input id="newCustomerPhone" placeholder="Phone" />
+            </div>
+            <button id="saveCustomerBtn" style="margin-top:8px;">Save & Select</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="toolbar" style="justify-content:space-between; margin-bottom:10px;">
+          <h3 style="margin:0;">Medicines</h3>
+          <button id="addMedicineRow" class="btn-primary">+ Add Medicine</button>
+        </div>
+        <div class="table-wrap pos-table-wrap">
+          <table class="pos-table">
+            <thead>
+              <tr>
+                <th>Medicine</th>
+                <th>Qty</th>
+                <th>Price</th>
+                <th>Item Discount %</th>
+                <th>Line Total</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody id="salesRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card grid grid-3">
+        <div>
+          <label>Overall Discount %</label>
+          <select id="overallDiscount"><option>0</option><option>5</option><option>10</option><option>15</option><option>20</option></select>
+        </div>
+        <div>
+          <label>GST %</label>
+          <select id="gstPercent"><option>0</option><option>5</option><option>12</option><option>18</option></select>
+        </div>
+        <div>
+          <label>Paid</label>
+          <input id="paidAmount" type="number" min="0" step="0.01" value="0" />
+        </div>
+      </div>
+
+      <div class="card grid grid-3">
+        <div><h3>Subtotal: ₹<span id="subtotal">0.00</span></h3></div>
+        <div><h3>GST Amount: ₹<span id="gstAmount">0.00</span></h3></div>
+        <div><h3>Final Total: ₹<span id="finalTotal">0.00</span></h3></div>
+        <div><h3>Discount: ₹<span id="discountAmount">0.00</span></h3></div>
+        <div><h3>Paid: ₹<span id="paidView">0.00</span></h3></div>
+        <div><h3>Due: ₹<span id="dueAmount">0.00</span></h3></div>
+      </div>
+
+      <div class="toolbar">
+        <button id="submitSale" class="btn-primary">Submit Sale</button>
+        <button id="printInvoiceBtn" class="print-btn">🖨 Print Invoice</button>
+        <span id="salesMsg" class="muted"></span>
+      </div>
+    </main>
+  </div>
+
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/layout.js"></script>
+  <script src="/assets/js/sales.js"></script>
+</body>
+</html>

@@ -1,0 +1,83 @@
+if (!API.getToken()) {
+  window.location.href = "login.html";
+}
+
+function formatCurrency(v) {
+  return `₹${Number(v || 0).toFixed(2)}`;
+}
+
+function logout() {
+  API.clearToken();
+  window.location.href = "login.html";
+}
+
+function injectStaticNavbar() {
+  const root = document.getElementById("navbar-root");
+  if (!root) return;
+  root.innerHTML = `
+    <div class="navbar no-print">
+      <div class="brand">PharmaTrackPro</div>
+      <div class="store-name">Business Dashboard</div>
+      <div class="nav-links">
+        <a class="nav-link active" href="dashboard.html">Dashboard</a>
+        <a class="nav-link" href="sales.html">Sales</a>
+        <a class="nav-link" href="inventory.html">Inventory</a>
+        <a class="nav-link" href="credit.html">Credit</a>
+        <a class="nav-link" href="settings.html">Settings</a>
+        <a class="nav-link" href="#" id="logoutBtn">Logout</a>
+      </div>
+    </div>
+  `;
+  document.getElementById("logoutBtn")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    logout();
+  });
+}
+
+function initDashboard() {
+  injectStaticNavbar();
+
+  Promise.all([
+    API.get("/api/dashboard/cards"),
+    API.get("/api/dashboard/monthly-revenue"),
+    API.get("/api/dashboard/top-medicines"),
+  ])
+    .then(([cardsData, monthlyData, topData]) => {
+      const cards = [
+        ["Today Revenue", formatCurrency(cardsData.todayRevenue)],
+        ["Today Profit", formatCurrency(cardsData.todayProfit)],
+        ["Credit Outstanding", formatCurrency(cardsData.creditOutstanding)],
+        ["Low Stock Count", cardsData.lowStockCount],
+        ["Expiry Alert", cardsData.expiryAlert],
+      ];
+      const root = document.getElementById("snapshotCards");
+      if (root) {
+        root.innerHTML = cards
+          .map(([k, v]) => `<div class="card"><div class="muted">${k}</div><h2>${v}</h2></div>`)
+          .join("");
+      }
+
+      const doughnut = document.getElementById("revenueDoughnut");
+      if (doughnut) {
+        doughnut.innerHTML = `<div class="empty-state">Current: ${formatCurrency(monthlyData.currentMonth)} | Last: ${formatCurrency(monthlyData.lastMonth)} | Growth: ${Number(monthlyData.growthPercent || 0).toFixed(2)}%</div>`;
+      }
+
+      const top = document.getElementById("topMedicinesChart");
+      if (top) {
+        if (!topData.length) {
+          top.innerHTML = `<div class="empty-state">No sales data available</div>`;
+        } else {
+          top.innerHTML = topData
+            .map((r) => `<div class="toolbar" style="justify-content:space-between;"><span>${r.name}</span><span>${r.total_quantity}</span></div>`)
+            .join("");
+        }
+      }
+    })
+    .catch((error) => {
+      console.error(error);
+      const root = document.getElementById("snapshotCards");
+      if (root) root.innerHTML = `<div class="card">Failed to load dashboard.</div>`;
+    });
+}
+
+initDashboard();
