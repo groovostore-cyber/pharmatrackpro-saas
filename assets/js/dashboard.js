@@ -211,23 +211,9 @@ async function initDashboard() {
   injectStaticNavbar();
   try {
     const [cardsData, statsData] = await Promise.all([
-      API.get("/dashboard/cards"),
-      (async () => {
-        const token = API.getToken();
-        const response = await API.get("/dashboard/stats", {
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-        });
-        if (!response.ok) throw new Error("API failed");
-        const json = await response.json();
-        if (!json?.success) {
-          throw new Error(json?.message || "Failed to load dashboard stats");
-        }
-        return json.data;
-      })(),
-    ]);
+  API.get("/dashboard/cards"),
+  API.get("/dashboard/stats"),
+]);
 
     const cards = [
       ["Today Revenue", formatCurrency(cardsData.todayRevenue)],
