@@ -214,7 +214,7 @@ async function initDashboard() {
       API.get("/dashboard/cards"),
       (async () => {
         const token = API.getToken();
-        const response = await fetch("api/dashboard/stats", {
+        const response = await API.get("api/dashboard/stats", {
           headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),
