@@ -158,12 +158,12 @@ function recalc() {
 }
 
 async function loadMedicines() {
-  const raw = await API.get("/api/medicines");
+  const raw = await API.get("/medicines");
   state.medicines = (raw || []).map(normalizeMedicine);
 }
 
 async function loadCustomers(query = "") {
-  const raw = await API.get(`/api/customers?q=${encodeURIComponent(query)}`);
+  const raw = await API.get(`/customers?q=${encodeURIComponent(query)}`);
   const all = (raw || []).map(normalizeCustomer);
   const q = String(query || "").toLowerCase();
   state.customers = q ? all.filter((c) => c.name.toLowerCase().includes(q) || String(c.phone || "").toLowerCase().includes(q)) : all;
@@ -241,7 +241,7 @@ function bindCustomerControls() {
       document.getElementById("salesMsg").textContent = "Name and phone are required for new customer.";
       return;
     }
-    const newCustomer = await API.post("/api/customers", { name, phone, address: "" });
+    const newCustomer = await API.post("/customers", { name, phone, address: "" });
     state.selectedCustomer = newCustomer;
     search.value = newCustomer.name;
     document.getElementById("newCustomerBox").style.display = "none";
@@ -396,7 +396,7 @@ async function submitSale() {
     gst_percent,
   };
 
-  const saleData = await API.post("/api/sales", payload);
+  const saleData = await API.post("/sales", payload);
   state.lastSaleData = saleData;
   msg.textContent = "Sale submitted successfully.";
   document.getElementById("printInvoiceBtn").classList.add("show");
