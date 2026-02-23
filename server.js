@@ -16,9 +16,37 @@ const dashboardRoutes = require("./routes/dashboard");
 const exportRoutes = require("./routes/export");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
-app.use(cors());
+// Enhanced CORS Configuration for production compatibility
+// Allows localhost:5000 for local development and all origins for Render deployment
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, curl requests, etc.)
+      if (!origin) return callback(null, true);
+
+      // Allow localhost for local development
+      if (
+        origin === "/" ||
+        origin === "http://localhost:5000" ||
+        origin === "http://localhost:3000" ||
+        origin === "http://127.0.0.1:5000" ||
+        origin === "http://127.0.0.1:3000"
+      ) {
+        return callback(null, true);
+      }
+
+      // Allow all origins for production deployment (Render, etc.)
+      // Comment this out if you need more restrictive CORS policies
+      return callback(null, true);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  })
+);
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use("/api", dashboardRoutes);
@@ -27,10 +55,9 @@ app.use("/api/export", exportRoutes);
 // Serve UI static files from project root `ui` directory.
 // IMPORTANT: API routes are registered above so they are not
 // accidentally shadowed by static file serving.
-app.use(express.static(path.join(__dirname, "ui")));
+app.use(express.static(path.join(__dirname, "ui", "pages")));
 
 app.use("/assets", express.static(path.join(__dirname, "assets")));
-app.use("/ui", express.static(path.join(__dirname, "ui")));
 app.use("/backups", express.static(path.join(__dirname, "backups")));
 app.use("/exports", express.static(path.join(__dirname, "exports")));
 
@@ -317,11 +344,19 @@ app.get("/api/whatsapp/logs", safeHandler((req, res) => {
 }));
 
 app.get("/", (req, res) => {
-  res.redirect("/ui/pages/login.html");
+  res.redirect("/login.html");
 });
 
 demoService.seedDemoDataIfEmpty();
 
 app.listen(PORT, () => {
   console.log(`PharmaTrackPro ERP running on http://localhost:${PORT}`);
+});
+
+process.on("uncaughtException", (err) => {
+  console.error("Uncaught Exception:", err);
+});
+
+process.on("unhandledRejection", (err) => {
+  console.error("Unhandled Rejection:", err);
 });

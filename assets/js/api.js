@@ -1,3 +1,8 @@
+// Production-ready API configuration
+// Uses relative paths to work with any domain/port
+// Frontend and API share the same domain (served by Express)
+const API_BASE = "/api";
+
 const API = {
   getToken() {
     return localStorage.getItem("ptp_token") || "";
@@ -17,9 +22,12 @@ const API = {
     headers["Content-Type"] = headers["Content-Type"] || "application/json";
     if (token) headers.Authorization = `Bearer ${token}`;
 
+    // Build full API URL using relative path
+    const fullUrl = url.startsWith("http") ? url : `${API_BASE}${url}`;
+
     let res;
     try {
-      res = await fetch(url, {
+      res = await fetch(fullUrl, {
         ...options,
         headers,
       });

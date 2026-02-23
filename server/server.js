@@ -27,7 +27,6 @@ const exportRoutes = require("./routes/exportRoutes");
 
 const app = express();
 const http = require("http");
-const PORT = parseInt(process.env.PORT, 10) || 5000;
 const NODE_ENV = process.env.NODE_ENV || "development";
 const CORS_ORIGINS = process.env.CORS_ORIGINS?.split(",").map((o) => o.trim()) || ["*"];
 
@@ -39,9 +38,7 @@ const CORS_ORIGINS = process.env.CORS_ORIGINS?.split(",").map((o) => o.trim()) |
 connectDB();
 
 // Trust proxy when running behind a reverse proxy (useful in production)
-if (NODE_ENV === "production") {
-  app.set("trust proxy", true);
-}
+app.set("trust proxy", 1);
 
 // Security headers with Helmet
 app.use(helmet());
@@ -49,23 +46,11 @@ app.use(helmet());
 // Compression for responses
 app.use(compression());
 
-// CORS with origin whitelist
+// CORS configuration for production
 app.use(
   cors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (mobile apps, curl requests)
-      if (!origin) return callback(null, true);
-
-      if (CORS_ORIGINS.includes("*") || CORS_ORIGINS.includes(origin)) {
-        callback(null, true);
-      } else {
-        callback(new Error("CORS not allowed"));
-      }
-    },
+    origin: true,
     credentials: true,
-    optionsSuccessStatus: 200,
-    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Access-Token"],
   })
 );
 
@@ -94,52 +79,59 @@ app.use(limiter);
 // Health/Status checks (no auth required, before rate limits)
 app.use("/api/status", statusRoutes);
 
-// Auth routes (public, with stricter rate limiting)
-app.use("/api/auth", authLimiter, authRoutes);
+
+// Auth routes (public)
+// Mount auth routes at /api/auth so controllers define paths relative to this prefix
+app.use("/api/auth", authRoutes);
 
 // Export routes (public routes before auth check)
 app.use("/api/export", exportRoutes);
 
-// Require authentication for all following routes
-app.use("/api", authMiddleware);
-
 // Subscription management routes (authenticated) - allow activation/status before global subscription enforcement
-app.use("/api/subscription", subscriptionRoutes);
+// Apply authentication only to subscription management endpoints
+app.use("/api/subscription", authMiddleware, subscriptionRoutes);
 
-// Require active subscription for protected routes
-app.use("/api", checkSubscription);
-
-// Protected routes
-app.use("/api/medicines", medicineRoutes);
-app.use("/api/customers", customerRoutes);
-app.use("/api/sales", saleRoutes);
-app.use("/api/settings", settingsRoutes);
-app.use("/api/dashboard", dashboardRoutes);
-app.use("/api/credits", creditRoutes);
+// Protected routes - apply auth + subscription check per-route (keeps public routes public)
+app.use("/api/medicines", authMiddleware, checkSubscription, medicineRoutes);
+app.use("/api/customers", authMiddleware, checkSubscription, customerRoutes);
+app.use("/api/sales", authMiddleware, checkSubscription, saleRoutes);
+app.use("/api/settings", authMiddleware, checkSubscription, settingsRoutes);
+app.use("/api/dashboard", authMiddleware, checkSubscription, dashboardRoutes);
+app.use("/api/credits", authMiddleware, checkSubscription, creditRoutes);
 
 // ============================================
 // PHASE 4: STATIC FILE SERVING
 // ============================================
 
+// Serve HTML pages from ui/pages as root
+// This allows /login.html, /signup.html, /dashboard.html, etc.
+app.use(express.static(path.join(__dirname, "..", "ui", "pages"), {
+  maxAge: "1d",
+  etag: false,
+  setHeaders: (res, path) => {
+    // Don't cache HTML files (they may change)
+    if (path.endsWith(".html")) {
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+    }
+  },
+}));
+
+// Serve assets folder
 app.use("/assets", express.static(path.join(__dirname, "..", "assets"), {
   maxAge: "1d",
   etag: false,
 }));
-app.use("/ui", express.static(path.join(__dirname, "..", "ui"), {
-  maxAge: "1d",
-  etag: false,
-}));
 
-// Root redirect
+// Root route → login page
 app.get("/", (_req, res) => {
-  res.redirect("/ui/pages/login.html");
+  res.sendFile(path.join(__dirname, "..", "ui", "pages", "login.html"));
 });
 
 // ============================================
 // PHASE 5: ERROR HANDLING
 // ============================================
 
-// 404 handler
+// 404 handler for all other requests
 app.use((_req, res) => {
   res.status(404).json({ success: false, message: "Route not found" });
 });
@@ -175,21 +167,54 @@ app.use((err, _req, res, _next) => {
 
 const server = http.createServer(app);
 
+// ============================================
+// SMART PORT MANAGEMENT SYSTEM
+// ============================================
+// Automatically finds available port if default is in use
+// Retries up to 10 times (5000-5009)
+
+const DEFAULT_PORT = parseInt(process.env.PORT, 10) || 5000;
+let CURRENT_PORT = DEFAULT_PORT;
+const MAX_PORT_RETRIES = 10;
+let portRetryCount = 0;
+
 function onListening() {
-  logger.info(`Server running on http://localhost:${PORT}`, {
+  logger.info(`Server running on http://localhost:${CURRENT_PORT}`, {
     environment: NODE_ENV,
-    port: PORT,
+    port: CURRENT_PORT,
   });
 }
 
 function onError(err) {
-  // Handle common startup errors gracefully
+  // Handle port already in use - try next port
   if (err && err.code === "EADDRINUSE") {
-    logger.error(`Port ${PORT} is already in use. Please stop the process using this port or set PORT to a free port. Exiting.`, {
-      code: err.code,
-    });
-    // Give a short delay so logs flush, then exit
-    setTimeout(() => process.exit(1), 100);
+    portRetryCount++;
+
+    if (portRetryCount < MAX_PORT_RETRIES) {
+      CURRENT_PORT++;
+      logger.warn(`Port ${CURRENT_PORT - 1} in use. Trying port ${CURRENT_PORT}...`, {
+        attempt: portRetryCount,
+        maxRetries: MAX_PORT_RETRIES,
+      });
+
+      // Remove error listeners to avoid stacking
+      server.removeAllListeners("error");
+      server.on("error", onError);
+
+      // Retry with next port
+      try {
+        server.listen(CURRENT_PORT);
+      } catch (retryErr) {
+        logger.error("Socket error during port retry", { message: retryErr && retryErr.message });
+        onError(retryErr);
+      }
+    } else {
+      logger.error(
+        `Failed to find available port after ${MAX_PORT_RETRIES} attempts (ports ${DEFAULT_PORT}-${CURRENT_PORT}). Exiting.`,
+        { code: err.code }
+      );
+      setTimeout(() => process.exit(1), 100);
+    }
     return;
   }
 
@@ -203,7 +228,7 @@ server.on("error", onError);
 server.on("listening", onListening);
 
 try {
-  server.listen(PORT);
+  server.listen(CURRENT_PORT);
 } catch (err) {
   // Defensive: unexpected synchronous errors
   onError(err);
@@ -215,7 +240,7 @@ try {
 
 const shutdownGracefully = (signal, err) => {
   return async () => {
-    logger.info(`${signal} received, shutting down gracefully...`);
+    logger.info(`${signal} received on port ${CURRENT_PORT}, shutting down gracefully...`);
 
     if (err) {
       logger.error("Shutdown triggered by error", NODE_ENV === "development" ? err : { message: err && err.message });

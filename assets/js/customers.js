@@ -24,7 +24,7 @@ function renderRows(rows = []) {
       <td>${money(c.totalPurchases)}</td>
       <td class="${Number(c.totalDue || 0) > 0 ? "danger" : "success"}">${money(c.totalDue)}</td>
       <td>${fmtDate(c.lastPurchaseDate || c.updatedAt)}</td>
-      <td><a class="btn-link" href="/ui/pages/customer-profile.html?id=${c._id}">View Details</a></td>
+      <td><a class="btn-link" href="/customer-profile.html?id=${c._id}">View Details</a></td>
     </tr>
   `).join("");
 }

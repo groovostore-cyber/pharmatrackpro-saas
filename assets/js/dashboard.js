@@ -211,10 +211,10 @@ async function initDashboard() {
   injectStaticNavbar();
   try {
     const [cardsData, statsData] = await Promise.all([
-      API.get("/api/dashboard/cards"),
+      API.get("/dashboard/cards"),
       (async () => {
         const token = API.getToken();
-        const response = await fetch("/api/dashboard/stats", {
+        const response = await fetch("api/dashboard/stats", {
           headers: {
             "Content-Type": "application/json",
             ...(token ? { Authorization: `Bearer ${token}` } : {}),

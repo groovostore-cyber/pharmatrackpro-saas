@@ -355,7 +355,7 @@
                     
                     // Redirect to dashboard after 2 seconds
                     setTimeout(() => {
-                        window.location.href = '/ui/pages/dashboard.html';
+                        window.location.href = '/dashboard.html';
                     }, 2000);
                 } else {
                     throw new Error(data.message || 'Failed to activate trial');
@@ -374,9 +374,9 @@
             // Otherwise redirect to login
             const token = localStorage.getItem('authToken');
             if (token) {
-                window.location.href = '/ui/pages/dashboard.html';
+                window.location.href = '/dashboard.html';
             } else {
-                window.location.href = '/ui/pages/login.html';
+                window.location.href = '/login.html';
             }
         }
 

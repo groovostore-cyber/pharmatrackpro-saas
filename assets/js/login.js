@@ -1,5 +1,6 @@
 document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
+
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value.trim();
   const msg = document.getElementById("loginMsg");
@@ -11,31 +12,20 @@ document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
   }
 
   try {
-    const data = await API.post("/api/auth/login", { username, password });
-    API.setToken(data.token);
-    
-    // Store email for trial activation (if available)
-    if (data.email) {
-      localStorage.setItem("userEmail", data.email);
+    // 🔥 IMPORTANT: use API wrapper correctly
+    const data = await API.post("/auth/login", { username, password });
+
+    if (data) {
+      // Save token if backend returns it
+      if (data.token) {
+        localStorage.setItem("ptp_token", data.token);
+      }
+
+      window.location.href = "/dashboard.html";
     }
 
-    // Handle subscription status-based redirects
-    if (data.subscriptionStatus === "inactive") {
-      // Redirect to trial activation page
-      window.location.href = "activate-trial.html";
-    } else if (data.subscriptionStatus === "expired") {
-      // Redirect to payment/upgrade page
-      window.location.href = "payment.html";
-    } else if (data.subscriptionStatus === "suspended") {
-      // Show error and block access
-      msg.textContent = "Your account has been suspended. Please contact support.";
-    } else {
-      // Redirect to dashboard for trial, active, or superadmin users
-      window.location.href = "dashboard.html";
-    }
   } catch (error) {
-    console.error(error);
-    msg.textContent = error.message || "Invalid credentials";
+    console.error("Login error:", error);
+    msg.textContent = error.message || "Login failed";
   }
 });
-

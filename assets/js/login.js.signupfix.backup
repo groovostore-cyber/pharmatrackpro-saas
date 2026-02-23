@@ -8,7 +8,7 @@ document.getElementById("loginForm")?.addEventListener("submit", async (e) => {
   try {
     const user = await API.post("/api/auth/login", { username, password });
     localStorage.setItem("ptp_user", JSON.stringify(user));
-    window.location.href = "/ui/pages/dashboard.html";
+    window.location.href = "/dashboard.html";
   } catch (error) {
     console.error(error);
     msg.textContent = error.message;

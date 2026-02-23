@@ -29,7 +29,7 @@ const shopSchema = new mongoose.Schema({
   },
   subscriptionStatus: {
     type: String,
-    enum: ["trial", "active", "expired", "suspended"],
+    enum: ["trial", "active", "expired", "inactive", "suspended"],
     default: "trial",
   },
   trialEndsAt: {

@@ -1,5 +1,5 @@
 (async () => {
-  const base = 'http://localhost:5000';
+  const base = '/';
   const fetch = global.fetch;
   function log(...args) { console.log(...args); }
   try {

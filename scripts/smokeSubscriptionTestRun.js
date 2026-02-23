@@ -1,6 +1,6 @@
 const fs = require('fs');
 (async () => {
-  const base = 'http://localhost:5000';
+  const base = '/';
   const out = { steps: [] };
   const make = async (url, opts = {}) => {
     const res = await fetch(base + url, opts);

@@ -15,7 +15,7 @@ async function injectNavbar() {
   }
 
   const page = activePath();
-  const link = (href, label) => `<a class="nav-link ${page === href ? "active" : ""}" href="/ui/pages/${href}">${label}</a>`;
+  const link = (href, label) => `<a class="nav-link ${page === href ? "active" : ""}" href="/${href}">${label}</a>`;
 
   root.innerHTML = `
     <div class="navbar no-print">
@@ -28,7 +28,7 @@ async function injectNavbar() {
         ${link("inventory.html", "Inventory")}
         ${link("credit.html", "Credit")}
         ${link("settings.html", "Settings")}
-        <a class="nav-link" href="/ui/pages/login.html" onclick="logoutUser()">Logout</a>
+        <a class="nav-link" href="/login.html" onclick="logoutUser()">Logout</a>
       </div>
     </div>
   `;
@@ -37,7 +37,7 @@ async function injectNavbar() {
 function requireAuth() {
   const token = API.getToken();
   if (!token) {
-    window.location.href = "/ui/pages/login.html";
+    window.location.href = "/login.html";
   }
 }
 

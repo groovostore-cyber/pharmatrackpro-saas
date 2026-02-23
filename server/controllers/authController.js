@@ -18,6 +18,11 @@ function signToken(user) {
   };
 
   const expiresIn = process.env.JWT_EXPIRES || "7d";
+  if (!process.env.JWT_SECRET) {
+    logger.error("JWT secret not configured - cannot sign token", { payload });
+    throw new Error("JWT_SECRET is not defined in .env");
+  }
+
   const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn });
 
   logger.debug("JWT token generated", {
@@ -39,7 +44,10 @@ exports.signup = async (req, res) => {
     // Validate required fields
     const validation = validateRequired({ username, password }, ["username", "password"]);
     if (!validation.valid) {
-      return sendError(res, validation.errors.join(", "), 400);
+      return res.status(400).json({
+        success: false,
+        message: validation.errors.join(", ")
+      });
     }
 
     // Normalize inputs
@@ -47,13 +55,19 @@ exports.signup = async (req, res) => {
     const normalizedPassword = normalizeString(password);
 
     if (normalizedUsername.length < 3 || normalizedPassword.length < 6) {
-      return sendError(res, "Username must be 3+ characters, password must be 6+ characters", 400);
+      return res.status(400).json({
+        success: false,
+        message: "Username must be 3+ characters, password must be 6+ characters"
+      });
     }
 
     // Check if user exists
     const existing = await User.findOne({ username: normalizedUsername });
     if (existing) {
-      return sendError(res, "Username already exists", 400);
+      return res.status(400).json({
+        success: false,
+        message: "Username already exists"
+      });
     }
 
     // Hash password
@@ -63,15 +77,16 @@ exports.signup = async (req, res) => {
     const placeholderEmail = email && isValidEmail(email) ? email : `${normalizedUsername}.${Date.now()}@local`;
 
     // Create Shop with inactive subscription (requires explicit activation)
-    const shop = await Shop.create({
+    const shopPayload = {
       shopName: normalizeString(shopName) || `${normalizedUsername}'s Pharmacy`,
       ownerName: normalizeString(ownerName) || "",
       email: placeholderEmail,
-      subscriptionStatus: "inactive",
-      subscriptionType: null,
-      trialEndsAt: null,
-      subscriptionExpiresAt: null,
-    });
+      // Use valid enum values defined in Shop schema - start with trial
+      subscriptionStatus: "trial",
+      subscriptionType: "trial",
+    };
+
+    const shop = await Shop.create(shopPayload);
 
     // Best-effort: run subscription service initializer (should be idempotent)
     try {
@@ -89,7 +104,14 @@ exports.signup = async (req, res) => {
     });
 
     // Generate token
-    const token = signToken(user);
+    let token;
+    try {
+      token = signToken(user);
+    } catch (e) {
+      // Log and surface a clear message for debugging
+      logger.error("Token generation failed", { error: e && e.message });
+      throw e;
+    }
 
     logger.info("New user signup", {
       userId: user._id.toString(),
@@ -97,9 +119,10 @@ exports.signup = async (req, res) => {
       username: normalizedUsername,
     });
 
-    return sendSuccess(
-      res,
-      {
+    return res.status(201).json({
+      success: true,
+      message: "Signup successful - Please activate your free 30-day trial",
+      data: {
         token,
         user: {
           userId: user._id.toString(),
@@ -107,19 +130,34 @@ exports.signup = async (req, res) => {
           shopId: shop._id.toString(),
           shopName: shop.shopName,
           role: user.role,
-        },
-      },
-      "Signup successful - Please activate your free 30-day trial",
-      201
-    );
+        }
+      }
+    });
   } catch (error) {
-    logger.error("Signup error", error);
+    // Console-level diagnostic for immediate visibility in production logs
+    console.error("SIGNUP ERROR:", error);
 
-    if (error.code === 11000) {
-      return sendError(res, "Email already exists", 400);
+    // Detailed logging for debugging (avoid logging raw passwords)
+    const safeBody = Object.assign({}, req.body);
+    if (safeBody.password) safeBody.password = "[REDACTED]";
+
+    logger.error("Signup error - details", {
+      message: error && (error.message || String(error)),
+      stack: error && error.stack,
+      body: safeBody,
+      code: error && error.code,
+      keyValue: error && error.keyValue,
+    });
+
+    // Duplicate key handling (username/email/shop unique constraints)
+    if (error && (error.code === 11000 || (error.keyValue && Object.keys(error.keyValue).length))) {
+      const dupField = error.keyValue ? Object.keys(error.keyValue)[0] : "duplicate";
+      return res.status(400).json({ success: false, message: `${dupField} already exists` });
     }
 
-    return sendError(res, "Failed to create account", 500);
+    // Provide more info in development to help debugging, but keep production messages generic
+    const devMessage = process.env.NODE_ENV === "development" ? `Failed to create account: ${error && error.message}` : "Failed to create account";
+    return res.status(500).json({ success: false, message: devMessage });
   }
 };
 

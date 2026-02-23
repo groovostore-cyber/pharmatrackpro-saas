@@ -1,5 +1,5 @@
 (async () => {
-  const base = 'http://localhost:5000';
+  const base = '/';
   const make = async (url, opts = {}) => {
     const res = await fetch(base + url, opts);
     const text = await res.text();

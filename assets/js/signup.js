@@ -1,40 +1,38 @@
-function showError(message) {
-  const msg = document.getElementById("signupMsg");
-  msg.className = "danger";
-  msg.textContent = message;
-}
-
-function showSuccess(message) {
-  const msg = document.getElementById("signupMsg");
-  msg.className = "success";
-  msg.textContent = message;
-}
-
-document.getElementById("signupForm")?.addEventListener("submit", async function (e) {
+document.getElementById("signupForm")?.addEventListener("submit", async (e) => {
   e.preventDefault();
 
   const username = document.getElementById("username").value.trim();
   const password = document.getElementById("password").value.trim();
   const confirm = document.getElementById("confirmPassword").value.trim();
+  const msg = document.getElementById("signupMsg");
+  msg.textContent = "";
 
   if (!username || !password || !confirm) {
-    showError("All fields required");
+    msg.textContent = "All fields required";
     return;
   }
 
   if (password !== confirm) {
-    showError("Passwords do not match");
+    msg.textContent = "Passwords do not match";
     return;
   }
 
   try {
-    await API.post("/api/auth/signup", { username, password });
-    showSuccess("Account created successfully");
+    // 🔥 IMPORTANT FIX HERE
+await API.post("/auth/signup", {
+  username,
+  password,
+  confirmPassword: confirm
+});
+msg.classList.remove("danger");
+msg.classList.add("success");
+msg.textContent = "Account created successfully";
     setTimeout(() => {
-      window.location.href = "login.html";
-    }, 500);
+      window.location.href = "/login.html";
+    }, 800);
+
   } catch (error) {
-    console.error(error);
-    showError(error.message || "Signup failed");
+    console.error("Signup error:", error);
+    msg.textContent = error.message || "Signup failed";
   }
 });

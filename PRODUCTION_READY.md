@@ -829,8 +829,8 @@ pharmatrack-pro/
 - [ ] CORS_ORIGINS matches your frontend domain
 - [ ] `npm start` runs without errors
 - [ ] `curl http://localhost:5000/api/status/health` returns 200 with UP status
-- [ ] Test signup at `/ui/pages/signup.html`
-- [ ] Test login at `/ui/pages/login.html`
+- [ ] Test signup at `/signup.html`
+- [ ] Test login at `/login.html`
 - [ ] Verify subscription is "trial" after signup
 - [ ] Check activity logs at `/api/status/activity`
 

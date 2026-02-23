@@ -27,7 +27,7 @@ async function sendWhatsAppReminder(customerId, phone) {
     window.open(waUrl, "_blank");
     
     // Log the action in backend
-    await API.post("/api/whatsapp/send-reminder", { customerId }).catch(err => console.warn(err));
+    await API.post("/whatsapp/send-reminder", { customerId }).catch(err => console.warn(err));
   } catch (error) {
     console.error(error);
     alert("Failed to open WhatsApp: " + error.message);
@@ -51,7 +51,7 @@ async function markAsPaid(customerId) {
 async function loadCreditCustomers() {
   const body = document.getElementById("creditRows");
   try {
-    const result = await API.get("/api/credits");
+    const result = await API.get("/credits");
     const rows = result?.rows || [];
     const storeName = result?.storeName || "PharmaTrackPro Store";
     

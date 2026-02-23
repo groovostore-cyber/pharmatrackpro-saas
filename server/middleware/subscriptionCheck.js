@@ -30,7 +30,7 @@ async function checkSubscription(req, res, next) {
     const now = new Date();
 
     // Block inactive accounts
-    if (shop.subscriptionStatus === "inactive") {
+    if (shop.subscriptionStatus === "expired") {
       return res.status(403).json({
         success: false,
         message: "Trial not activated. Please activate your free 30-day trial to continue.",
