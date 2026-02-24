@@ -13,7 +13,7 @@ function showStatus(message, type = "info") {
 
 async function loadSettings() {
   try {
-    const settings = await API.get("/api/settings");
+    const settings = await API.get("/settings");
     document.getElementById("shopName").value = settings.store_name || "";
     document.getElementById("ownerName").value = settings.owner_name || "";
     document.getElementById("shopAddress").value = settings.shop_address || "";
